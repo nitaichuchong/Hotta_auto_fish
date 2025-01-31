@@ -1,4 +1,5 @@
 from time import sleep
+from xmlrpc.client import boolean
 
 import cv2
 import numpy as np
@@ -81,6 +82,9 @@ def count_yellow_pixels(hsv_image, rect):
 
 # 主函数
 if __name__ == "__main__":
+    left_keyDown = False
+    right_keyDown = False
+
     while True:
         # 捕获目标区域的截图
         screen = capture_screen((670, 73, 1248, 95))
@@ -93,27 +97,32 @@ if __name__ == "__main__":
 
         if white_block_rect is not None:
             yellow_left, yellow_right = count_yellow_pixels(hsv_screen, white_block_rect)
+            print(yellow_left, yellow_right)
 
-            # if yellow_left > yellow_right:
-            #     pyautogui.keyDown('a')
-            #     sleep(0.1)
-            #     pyautogui.keyUp('a')
-            #     print("left")
-            # elif yellow_left < yellow_right:
-            #     pyautogui.keyDown('d')
-            #     sleep(0.1)
-            #     pyautogui.keyUp('d')
-            #     print("right")
-            # else:
-            #     continue
+            if (yellow_left - yellow_right) > 100:
+                if right_keyDown:
+                    pyautogui.keyUp('d')
+                    right_keyDown = False
+                pyautogui.keyDown('a')
+                left_keyDown = True
+
+            elif (yellow_right - yellow_left) > 100:
+                if left_keyDown:
+                    pyautogui.keyUp('a')
+                    left_keyDown = False
+                pyautogui.keyDown('d')
+                right_keyDown = True
+
+            else:
+                continue
 
         # 显示原始截图和HSV截图（可选）
         # cv2.imshow('Original Screen', screen)
-        cv2.imshow('HSV Screen', hsv_screen)
+        # cv2.imshow('HSV Screen', hsv_screen)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
-        sleep(0.5)
+        # sleep(0.2)
 
     cv2.destroyAllWindows()
