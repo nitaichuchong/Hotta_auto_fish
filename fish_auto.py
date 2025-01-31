@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 import pyautogui
 
+from config import FISH_GAME_REGION
 from utils import capture_screen, convert_to_hsv, find_contours, count_yellow_pixels
 
 
@@ -12,10 +13,12 @@ if __name__ == "__main__":
     # 控制按键状态的开关
     left_keyDown = False
     right_keyDown = False
+    # 从配置文件获取对应的region
+    fish_region = FISH_GAME_REGION
 
     while True:
         # 捕获目标区域的截图
-        screen = capture_screen((670, 73, 1248, 95))
+        screen = capture_screen(fish_region)
         # 将截图转换为HSV颜色空间
         hsv_screen = convert_to_hsv(screen)
         # 寻找白色方块轮廓
