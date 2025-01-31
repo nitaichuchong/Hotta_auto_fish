@@ -1,6 +1,10 @@
+"""
+这是一个从别人那里偷来的小程序，首先应该准备一张对应的图片，
+然后运行时会弹出一个cv2窗口，鼠标单击任一窗口内区域，
+会将该位置的HSV值打印于终端中
+"""
+
 import cv2
-import numpy as np
-from matplotlib import pyplot as plt
 
 image = cv2.imread('hsv.png')
 HSV = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -14,3 +18,4 @@ def getpos(event, x, y, flags, param):
 cv2.imshow("imageHSV", HSV)
 cv2.setMouseCallback("imageHSV", getpos)
 cv2.waitKey(0)
+

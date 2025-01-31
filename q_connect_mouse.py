@@ -1,3 +1,5 @@
+""" pyautogui 以及 keyboard 联合使用的测试程序"""
+
 import pyautogui
 import keyboard
 
@@ -8,6 +10,5 @@ if __name__ == '__main__':
     pyautogui.FAILSAFE = True
 
     keyboard.on_press(key_q)
-
 
     keyboard.wait("esc")
