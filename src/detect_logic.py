@@ -11,8 +11,8 @@ def get_yellow_area_range(region):
     :param
         region: 从 config 中读取的预先记录的区域
     :return:
-        min_x:  黄色区域的左边界
-        max_x:  黄色区域的右边界
+        min_x:  黄色区域的左边界，绝对坐标
+        max_x:  黄色区域的右边界，绝对坐标
     """
     # 1.截图并转换为 HSV 颜色空间
     screenshot = pyautogui.screenshot(region=region)
@@ -40,20 +40,20 @@ def get_white_block_pos(region):
     获取代表玩家的白色方块的中心点
     :param region:  从 config 中读取的预先记录的区域
     :return:
-        center_x:   代表玩家的白色方块的中心点
+        center_x:   代表玩家的白色方块的中心点，绝对坐标
     """
     screenshot = pyautogui.screenshot(region=region)
     screenshot = np.array(screenshot)
     frame = np.array(screenshot)
 
-    # 2. 提取白色掩码（RGB≥240，先粗筛白色区域）
+    # 2.提取白色掩码（RGB≥240，先粗筛白色区域）
     white_mask = np.all(frame >= 240, axis=2).astype(np.uint8) * 255
 
-    # 3. 形态学开运算（先腐蚀后膨胀）：去除小噪点，保留连续轮廓
+    # 3.形态学开运算（先腐蚀后膨胀）：去除小噪点，保留连续轮廓
     kernel = np.ones((2, 2), np.uint8)
     white_mask_clean = cv2.morphologyEx(white_mask, cv2.MORPH_OPEN, kernel)
 
-    # 4. 查找所有外部轮廓（只找最外层，排除嵌套轮廓）
+    # 4.查找所有外部轮廓（只找最外层，排除嵌套轮廓）
     contours, _ = cv2.findContours(
         white_mask_clean,
         cv2.RETR_EXTERNAL,  # 只提取最外层轮廓
@@ -62,19 +62,19 @@ def get_white_block_pos(region):
     if len(contours) == 0:
         return None
 
-    # 5. 定义目标白色方块的特征筛选条件（关键！根据游戏画面微调）
+    # 5.定义目标白色方块的特征筛选条件（关键！根据游戏画面微调）
     target_contour = None
     h, w = frame.shape[:2]  # 截图的高、宽
     for cnt in contours:
-        # 5.1 计算轮廓的外接矩形（x,y是相对截图的坐标；w_cnt=宽，h_cnt=高）
+        # 计算轮廓的外接矩形（x,y是相对截图的坐标；w_cnt=宽，h_cnt=高）
         x_cnt, y_cnt, w_cnt, h_cnt = cv2.boundingRect(cnt)
 
-        # 5.2 筛选条件1：面积范围（排除太小/太大的轮廓，单位：像素）
+        # 筛选条件1：面积范围（排除太小/太大的轮廓，单位：像素）
         area = cv2.contourArea(cnt)
         if not (10 <= area <= 100):  # 目标方块面积通常在10-200像素（可微调）
             continue
 
-        # 5.3 筛选条件2：轮廓的实心度（排除空心/零散轮廓）
+        # 筛选条件2：轮廓的实心度（排除空心/零散轮廓）
         # 实心度=轮廓面积/外接矩形面积，越接近1越接近实心矩形
         solidity = area / (w_cnt * h_cnt) if (w_cnt * h_cnt) > 0 else 0
         if solidity < 0.5:  # 实心度≥0.5（可微调）
@@ -84,15 +84,15 @@ def get_white_block_pos(region):
         target_contour = cnt
         break  # 找到目标后直接退出循环
 
-    # 6. 无符合条件的轮廓，返回None
+    # 6.无符合条件的轮廓，返回None
     if target_contour is None:
         return None
 
-    # 7. 计算目标轮廓的中心点（相对截图）
+    # 7.计算目标轮廓的中心点（相对截图）
     x_cnt, y_cnt, w_cnt, h_cnt = cv2.boundingRect(target_contour)
     center_x_rel = x_cnt + w_cnt / 2  # 轮廓外接矩形的中心x
 
-    # 8. 转换为屏幕绝对坐标
+    # 8.转换为屏幕绝对坐标
     center_x_abs = region[0] + center_x_rel
     return center_x_abs
 

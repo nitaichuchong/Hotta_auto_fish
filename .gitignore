@@ -118,3 +118,6 @@ Temporary Items
 .directory
 .Trash-*
 .nfs*
+
+# 测试结果文件
+test/detect_result
