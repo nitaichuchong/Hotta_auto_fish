@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import pyautogui
 
-from config.config import yellow_low, yellow_high
+from config.config import YELLOW_LOW, YELLOW_HIGH
 
 
 def get_yellow_area_range(region):
@@ -20,7 +20,7 @@ def get_yellow_area_range(region):
     frame = cv2.cvtColor(screenshot, cv2.COLOR_RGB2HSV)
 
     # 2.读取并创建黄色的 mask
-    mask = cv2.inRange(frame, yellow_low, yellow_high)
+    mask = cv2.inRange(frame, YELLOW_LOW, YELLOW_HIGH)
 
     # 3.提取所有黄色像素的x坐标（忽略y坐标，只看水平方向）
     # 找到所有黄色像素的位置，mask == 255 表示为白色，即匹配的到的颜色

@@ -2,25 +2,25 @@ import cv2
 import pyautogui
 import time
 import numpy as np
-import os  # 新增：导入os模块用于目录创建和文件保存
+import os
 
 from src.detect_logic import get_yellow_area_range, get_white_block_pos
-from config.config import yellow_low, yellow_high
-from config.config import FISH_GAME_REGION as region
+from config.config import FISH_GAME_REGION
 
 
-def test_detection():
+def test_detection(region=FISH_GAME_REGION):
     """
-    测试检测逻辑：每隔1秒截图并标注检测点位，保存到detect目录（按1、2、3...命名）
+
+    :param region:
+    :return:
     """
-    # 新增：创建detect目录（不存在则创建）
+    # detect目录（不存在则创建）
     save_dir = "detect_result"
     os.makedirs(save_dir, exist_ok=True)
 
-    # 新增：初始化图片计数器（从1开始）
+    # 初始化图片计数器，用来命名检测结果的图片文件
     img_count = 1
 
-    print("测试脚本已启动！按 'q' 键退出")
     print(f"检测结果将保存到 {os.path.abspath(save_dir)} 目录下")
 
     while True:
