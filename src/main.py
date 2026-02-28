@@ -3,7 +3,7 @@ import threading
 import tkinter as tk
 
 from OCR import fish_endurance_recognition
-from fish_auto import fish_game
+from src.fish_auto import fish_game
 
 
 def main_logic():
@@ -18,10 +18,10 @@ def main_logic():
     game_thread.daemon = True  # 设置为守护线程，以便主程序退出时自动终止
     game_thread.start()
 
-    # 启动耐力识别线程
-    endurance_thread = threading.Thread(target=fish_endurance_recognition, args=(click_event,))
-    endurance_thread.daemon = True  # 设置为守护线程
-    endurance_thread.start()
+    # # 启动耐力识别线程
+    # endurance_thread = threading.Thread(target=fish_endurance_recognition, args=(click_event,))
+    # endurance_thread.daemon = True  # 设置为守护线程
+    # endurance_thread.start()
 
 def terminate_program():
     """

@@ -1,11 +1,9 @@
 from time import sleep
 
-import cv2
-import numpy as np
 import pyautogui
 
-from config import FISH_GAME_REGION
-from utils import capture_screen, convert_to_hsv, find_contours, count_yellow_pixels
+from config.config import FISH_GAME_REGION
+from src.utils import capture_screen, convert_to_hsv, find_contours, count_yellow_pixels
 
 
 # 主函数

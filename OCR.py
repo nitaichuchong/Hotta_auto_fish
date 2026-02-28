@@ -4,7 +4,7 @@ from time import sleep
 import pytesseract
 from PIL import ImageGrab
 
-from config import FISH_ENDURANCE_REGION
+from config.config import FISH_ENDURANCE_REGION
 
 # 如果你在 Windows 上，需要指定 Tesseract 可执行文件的路径
 # pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
