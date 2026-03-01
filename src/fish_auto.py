@@ -8,18 +8,6 @@ from src.detect_logic import capture_screen, convert_to_hsv, find_contours, coun
 
 # 主函数
 def fish_game(click_event):
-    """
-    钓鱼游戏的核心逻辑：
-    1.如何寻找白色轮廓：先转换为灰度图像，然后做二值化处理，即剔除其它颜色只留白色方框，
-                    然后就可以用轮廓检测来得到代表玩家的白框位置
-    2.如何简化游戏逻辑：由于钓鱼游戏的进行方式是白框位于黄框内才算成功，而玩家控制白框
-                    尽可能满足条件，所以程序逻辑可以被转换为白框向黄框移动。又由于
-                    游戏只有 A 和 D 两个键控制方向，因此可以将游戏逻辑简化为计算以
-                    白框中心为分界线的左右两块区域的黄色像素数量，哪边更黄就往哪边移动
-    3.具体的移动逻辑：一些简单的数量多少判断，并用 pyautogui 库实现相应操作
-    4.循环进行钓鱼：通过全局的 event 事件来控制，依然使用 pyautogui
-    :param click_event: 控制是否收杆钓下一条鱼的 threading.Event()
-    """
     # 控制按键状态的开关
     left_keydown = False
     right_keydown = False
@@ -69,23 +57,10 @@ def fish_game(click_event):
 
         # click_event.set() 在鱼耐力识别中进行，当鱼耐力为 0 就会被 set
         # 依照游戏逻辑依次按下不同键即可，并记得 clear
-        if click_event.is_set():    # 是否已被 set
+        if click_event.is_set():  # 是否已被 set
             pyautogui.press('1')
             sleep(2)
             pyautogui.click()
             sleep(2)
             pyautogui.press('1')
             click_event.clear()
-
-
-
-
-    # 显示原始截图和HSV截图（可选）
-    # cv2.imshow('Original Screen', screen)
-    # cv2.imshow('HSV Screen', hsv_screen)
-
-    # if cv2.waitKey(1) & 0xFF == ord('q'):
-    #     break
-    # sleep(0.2)
-
-    # cv2.destroyAllWindows()
