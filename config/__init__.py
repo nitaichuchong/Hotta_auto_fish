@@ -1,0 +1,7 @@
+from .config import FISH_GAME_REGION, FISH_ENDURANCE_REGION
+from .config import YELLOW_LOW, YELLOW_HIGH
+from .config import PROJECT_PATH
+from .config import DIST_PATH, WORK_PATH, SPEC_PATH
+
+__all__ = ["FISH_GAME_REGION", "FISH_ENDURANCE_REGION", "YELLOW_LOW",
+           "YELLOW_HIGH", "PROJECT_PATH", "DIST_PATH", "WORK_PATH", "SPEC_PATH"]

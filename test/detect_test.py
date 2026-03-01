@@ -5,7 +5,7 @@ import numpy as np
 import os
 
 from src.detect_logic import get_yellow_area_range, get_white_block_pos
-from config.config import FISH_GAME_REGION
+from config import FISH_GAME_REGION
 
 
 class DetectionRunner:

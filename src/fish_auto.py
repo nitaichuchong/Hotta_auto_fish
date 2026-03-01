@@ -2,7 +2,7 @@ from time import sleep
 
 import pyautogui
 
-from config.config import FISH_GAME_REGION
+from config import FISH_GAME_REGION
 from src.detect_logic import capture_screen, convert_to_hsv, find_contours, count_yellow_pixels
 
 

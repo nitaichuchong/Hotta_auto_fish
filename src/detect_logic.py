@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import pyautogui
 
-from config.config import YELLOW_LOW, YELLOW_HIGH
+from config import YELLOW_LOW, YELLOW_HIGH
 
 
 def get_yellow_area_range(region):

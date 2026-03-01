@@ -3,7 +3,7 @@ import shutil
 
 from PyInstaller.__main__ import run
 
-from config.config import PROJECT_PATH, DIST_PATH, WORK_PATH, SPEC_PATH
+from config import PROJECT_PATH, DIST_PATH, WORK_PATH, SPEC_PATH
 
 
 # 获取项目根目录的绝对路径
