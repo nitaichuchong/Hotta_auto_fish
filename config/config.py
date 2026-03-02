@@ -4,8 +4,8 @@ import os
 # 这些配置是 PIL 格式用的，可以自行转换
 # 钓鱼游戏体力条的区域范围，比纯体力条范围大点作为容错
 FISH_GAME_REGION = (650, 60, 750, 40)
-# 钓鱼游戏中鱼的耐力值的区域范围
-FISH_ENDURANCE_REGION = (640, 110, 50, 20)
+# 钓鱼游戏中鱼的耐力值的区域范围，依旧大一点作容错
+FISH_ENDURANCE_REGION = (630, 110, 50, 30)
 
 # 所需的黄色像素HSV值上下范围
 YELLOW_LOW = (18, 183, 235)
@@ -25,4 +25,11 @@ PROJECT_PATH = os.path.dirname(os.getcwd())
 DIST_PATH = os.path.join(PROJECT_PATH, "build", "dist")
 WORK_PATH = os.path.join(PROJECT_PATH, "build", "work")
 SPEC_PATH = os.path.join(PROJECT_PATH, "build")
+
+# paddleocr 模型目录
+# 文字识别模型
+REC_MODEL_PATH = os.path.join(PROJECT_PATH, "models", "PP-OCRv5_mobile_rec")
+# 文字检测模型
+DET_MODEL_PATH = os.path.join(PROJECT_PATH, "models", "PP-OCRv5_mobile_det")
+
 
