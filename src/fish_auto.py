@@ -6,13 +6,24 @@ from src.detect_logic import get_yellow_area_range, get_white_block_pos
 
 
 # 主函数
-def fish_game():
+def fish_game(pause_event, resume_event, stop_flag):
     """通过 x 坐标的偏移差，控制键盘的 A 和 D 进行操作"""
-    # 用来标记当前按键状态（用状态机思想控制，清晰并简化按键逻辑）
     current_key = None
     target_key = None
 
-    while True:
+    while not stop_flag.is_set():
+        # 检测暂停事件，若暂停则等待恢复
+        if pause_event.is_set():
+            # 松开当前按键
+            if current_key is not None:
+                pyautogui.keyUp(current_key)
+                current_key = None
+            # 等待恢复信号
+            resume_event.wait()
+            # 重置恢复信号为 False
+            resume_event.clear()
+
+        # 获取 x 坐标偏移值
         offset_x = calculate_the_offset_x()
 
         # 未检测到偏移则跳过防止报错
@@ -42,6 +53,11 @@ def fish_game():
             if target_key is None:
                 sleep(0.1)
 
+        sleep(0.05)  # 降低CPU占用，不影响响应速度
+    # 退出循环时确保按键已松开
+    if current_key is not None:
+        pyautogui.keyUp(current_key)
+
 
 def calculate_the_offset_x():
     """
@@ -49,19 +65,14 @@ def calculate_the_offset_x():
     再以玩家位置减去中心点得到 x 坐标偏移值
     :return: x 坐标偏移值
     """
-    # 防止未检测到时的 None 值中断程序
+    #
     bar_area = get_yellow_area_range()
     player_pos = get_white_block_pos()
-    # 对 None 值进行处理
+    # 防止未检测到时的 None 值中断程序，对 None 值进行处理
     if (bar_area is not None) and (player_pos is not None):
-        bar_left, bar_right = get_yellow_area_range()
+        bar_left, bar_right = bar_area
         fish_x = (bar_right + bar_left) // 2  # 黄色区域中心点
-        player_pos = get_white_block_pos()  # 玩家位置
     else:
-        print("None")
         return None
 
     return int(player_pos - fish_x)
-
-
-fish_game()
