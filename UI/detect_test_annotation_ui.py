@@ -17,11 +17,6 @@ class DetectionUI:
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)  # 关闭窗口时的处理
         self.root.attributes("-topmost", True)  # 窗口置顶
 
-        self.label = None
-        self.button = None
-        self.image_label = None  # 图片展示的Label组件
-        self.update_image_id = None  # 图片更新定时器ID
-
         # 检测运行器实例
         self.runner = DetectionRunner()
         # 检测线程
@@ -30,6 +25,10 @@ class DetectionUI:
         self.runner.register_image_callback(self._on_image_update_trigger)
 
         # 创建UI组件
+        self.label = None
+        self.button = None
+        self.image_label = None  # 图片展示的Label组件
+        self.update_image_id = None  # 图片更新定时器ID
         self.create_widgets()
 
     def create_widgets(self):

@@ -1,6 +1,7 @@
 import os
 
 from config import FISH_ENDURANCE_REGION, REC_MODEL_PATH, DET_MODEL_PATH
+from config.config import REC_MODEL_NAME, DET_MODEL_NAME
 from src.detect_logic import capture_and_convert
 
 # 在导入 PaddleOCR 前设置为 True 以跳过模型源链接检查
@@ -16,9 +17,9 @@ def ocr_init():
     # 初始化 PaddleOCR，通过懒加载执行
     ocr = PaddleOCR(
         text_recognition_model_dir=REC_MODEL_PATH,  # 本地识别模型路径
-        text_recognition_model_name='PP-OCRv5_mobile_rec',
+        text_recognition_model_name=REC_MODEL_NAME,
         text_detection_model_dir=DET_MODEL_PATH,  # 本地检测模型路径
-        text_detection_model_name='PP-OCRv5_mobile_det',
+        text_detection_model_name=DET_MODEL_NAME,
         use_doc_orientation_classify=False,
         use_doc_unwarping=False,
         use_textline_orientation=False,
@@ -41,18 +42,28 @@ def ocr_recognition(ocr):
 
     # 返回耐力值并作异常处理
     if result and len(result) > 0:
-        text = result[0]['rec_texts']
-        if len(text) > 0:
-            try:
-                endurance = text[0]
-                # 通过 / 分割耐力值数据，并用 isdigit 筛选出数字
-                current_endurance = int(''.join(filter(str.isdigit, endurance.split('/')[0])))
-                total_endurance = int(''.join(filter(str.isdigit, endurance.split('/')[1])))
-                print(current_endurance, total_endurance)
-                return current_endurance, total_endurance
-            # 异常处理
-            except (ValueError, IndexError):
-                return None
-        else:
+        text_list = result[0]['rec_texts']
+        if not text_list:
             return None
+        # 检查是否含有分隔符
+        endurance_text = text_list[0].strip()
+        if '/' not in endurance_text:
+            return None
+        # 检查是否符合格式
+        parts = endurance_text.split('/')
+        if len(parts) != 2:
+            return None
+        # 检查是否有任意一项出错
+        current_str = ''.join(filter(str.isdigit, parts[0]))
+        total_str = ''.join(filter(str.isdigit, parts[1]))
+        if not current_str or not total_str:
+            return None
+        # 返回耐力值
+        try:
+            current_endurance = int(current_str)
+            total_endurance = int(total_str)
+            return current_endurance, total_endurance
+        except ValueError:
+            return None
+
     return None

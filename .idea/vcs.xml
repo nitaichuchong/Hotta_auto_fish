@@ -2,5 +2,7 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/models/PP-OCRv5_mobile_det" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/models/PP-OCRv5_mobile_rec" vcs="Git" />
   </component>
 </project>

@@ -5,6 +5,7 @@ from enum import Enum
 from time import sleep
 
 import pyautogui
+import pygetwindow as gw
 
 from src.OCR import ocr_init, ocr_recognition
 from src.fish_auto import fish_game
@@ -90,6 +91,18 @@ class MainUI:
         )
         self.endurance_label.grid(row=2, column=0, columnspan=2, padx=10, pady=10)
 
+        # 脚本操作提示标签
+        self.tips_label = tk.Label(
+            self.root,
+            text="请不要让该程序窗口遮挡住鱼的耐力值和体力条\n"
+                 "先初始化，然后第一下挥杆自己点，再点击开始执行\n"
+                 "开始执行只有鼠标跟键盘就别乱点了，目前还没兼容",
+            width=40,
+            anchor="center",
+            fg="green",
+        )
+        self.tips_label.grid(row=3, column=0, columnspan=2, padx=10, pady=10)
+
     def toggle_button(self):
         # 初始化
         if self.status == StatusEnum.INIT:
@@ -101,6 +114,18 @@ class MainUI:
             self.status = StatusEnum.START
         # 初始化完后，启动控制钓鱼和耐力值识别的线程
         elif self.status == StatusEnum.START:
+            # 需要先切换到游戏窗口，否则键盘控制会在脚本窗口上执行，无意义
+
+            self.activate_game_window()
+            # 检查线程是否存活
+            # 若线程未完全退出就再次点击 “开始”，会创建多个控制线程
+            if self.fish_thread and self.fish_thread.is_alive():
+                self.stop_flag.set()
+                self.fish_thread.join(timeout=1)
+            if self.ocr_thread and self.ocr_thread.is_alive():
+                self.stop_flag.set()
+                self.ocr_thread.join(timeout=1)
+
             # 重置停止标记和事件
             self.stop_flag.clear()
             self.pause_event.clear()
@@ -159,9 +184,11 @@ class MainUI:
                 self.resume_event.clear()
 
             # 执行 ocr 检测，获取耐力值
-            fish_endurance, total_endurance = ocr_recognition(ocr)
+            ocr_result = ocr_recognition(ocr)
+            if ocr_result is not None:
+                # 确认不为空后再解包
+                fish_endurance, total_endurance = ocr_result
             # 执行标签更新
-            if (fish_endurance is not None) and (total_endurance is not None):
                 self.endurance_label_update(fish_endurance, total_endurance)
                 # 立即更新 UI
                 self.root.update()
@@ -182,11 +209,16 @@ class MainUI:
         :param endurance2: 鱼的总耐力值
         :return: None
         """
-        self.endurance_label.config(text=f"{endurance1}/{endurance2}")
+        # 主线程异步更新，子线程直接操作主线程 UI 会引发冲突
+        self.root.after(0, lambda: self.endurance_label.config(text=f"{endurance1}/{endurance2}"))
 
     def rod_recovery_process(self):
+        # 确保操作在游戏窗口执行
+        self.activate_game_window()
+
         self.status_label.config(text="正在收杆中...")
         self.root.update()
+        pyautogui.press("1")    # 收杆
         sleep(2)  # 收杆耗时
         pyautogui.click()  # 需要点击一下才行
 
@@ -199,6 +231,15 @@ class MainUI:
         self.pause_event.clear()
         self.resume_event.set()
         self.root.update()
+
+    def activate_game_window(self):
+        # 激活游戏窗口，确保操作在游戏窗口上执行
+        try:
+            game_window = gw.getWindowsWithTitle("幻塔")[0]
+            game_window.activate()
+        except IndexError:
+            self.status_label.config(text="未找到游戏窗口！")
+            return
 
     def on_close(self):
         """关闭窗口时确保所有线程退出"""
@@ -213,7 +254,6 @@ class MainUI:
             self.ocr_thread.join(timeout=2)
 
         self.root.destroy()
-        sys.exit(0)
 
     def run(self):
         """启动窗口"""

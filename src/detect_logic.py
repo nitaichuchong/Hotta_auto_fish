@@ -2,7 +2,8 @@ import cv2
 import numpy as np
 import pyautogui
 
-from config import YELLOW_LOW, YELLOW_HIGH, FISH_GAME_REGION
+from config import YELLOW_LOW, YELLOW_HIGH, FISH_GAME_REGION, WHITE_BLOCK_AREA_MIN, WHITE_BLOCK_AREA_MAX, \
+    WHITE_BLOCK_SOLIDITY
 
 
 def capture_and_convert(region=FISH_GAME_REGION):
@@ -14,6 +15,12 @@ def capture_and_convert(region=FISH_GAME_REGION):
         hsv_frame:  经过 np 处理后的 HSV 格式截图
         region_x:   截图区域的左边界在屏幕上的位置 x，在相对坐标意义上 x = 0
     """
+    # 新增参数校验
+    if not isinstance(region, (tuple, list)) or len(region) != 4:
+        raise ValueError("region参数必须是(x, y, width, height)格式的元组/列表")
+    if any(v < 0 for v in region):
+        raise ValueError("region参数的数值不能为负数")
+
     screenshot = pyautogui.screenshot(region=region)
     screenshot = np.array(screenshot)
     bgr_frame = cv2.cvtColor(screenshot, cv2.COLOR_RGB2BGR)
@@ -38,7 +45,8 @@ def get_yellow_area_range():
 
     # 3.提取所有黄色像素的x坐标（忽略y坐标，只看水平方向）
     # 找到所有黄色像素的位置，mask == 255 表示为白色，即匹配的到的颜色
-    _, x_coordinates = np.where(mask == 255)  # 我们只关心 X 坐标上，即左右的边界位置，所以忽略 Y
+    # 我们只关心 x 坐标上，即左右的边界位置，所以忽略 y
+    _, x_coordinates = np.where(mask == 255)
     if len(x_coordinates) == 0:
         return None  # 无黄色区域
 
@@ -81,15 +89,15 @@ def get_white_block_pos():
         # 计算轮廓的外接矩形（x,y是相对截图的坐标；w_cnt=宽，h_cnt=高）
         x_cnt, y_cnt, w_cnt, h_cnt = cv2.boundingRect(cnt)
 
-        # 筛选条件1：面积范围（排除太小/太大的轮廓，单位：像素）
+        # 筛选条件1：面积范围（排除太小/太大的轮廓，单位：像素，在 config 中调整）
         area = cv2.contourArea(cnt)
-        if not (10 <= area <= 100):  # 目标方块面积通常在10-200像素（可微调）
+        if not (WHITE_BLOCK_AREA_MIN <= area <= WHITE_BLOCK_AREA_MAX):  # 目标方块面积通常在10-200像素（可微调）
             continue
 
         # 筛选条件2：轮廓的实心度（排除空心/零散轮廓）
         # 实心度=轮廓面积/外接矩形面积，越接近1越接近实心矩形
         solidity = area / (w_cnt * h_cnt) if (w_cnt * h_cnt) > 0 else 0
-        if solidity < 0.5:  # 实心度≥0.5（可微调）
+        if solidity < WHITE_BLOCK_SOLIDITY:  # 实心度≥0.5（在 config 中调整）
             continue
 
         # 所有条件满足，确定为目标轮廓

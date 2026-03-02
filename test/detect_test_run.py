@@ -1,5 +1,3 @@
-import tkinter as tk
-
 from UI.detect_test_annotation_ui import DetectionUI
 
 

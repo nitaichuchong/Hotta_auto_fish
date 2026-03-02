@@ -11,6 +11,11 @@ FISH_ENDURANCE_REGION = (630, 110, 50, 30)
 YELLOW_LOW = (18, 183, 235)
 YELLOW_HIGH = (19, 191, 255)
 
+# 筛选玩家方块白色轮廓的阈值
+WHITE_BLOCK_AREA_MIN = 10
+WHITE_BLOCK_AREA_MAX = 100
+WHITE_BLOCK_SOLIDITY = 0.5
+
 # 钓鱼游戏的体力条范围
 point1 = (670, 70)
 point2 = (1250, 90)
@@ -29,7 +34,9 @@ SPEC_PATH = os.path.join(PROJECT_PATH, "build")
 # paddleocr 模型目录
 # 文字识别模型
 REC_MODEL_PATH = os.path.join(PROJECT_PATH, "models", "PP-OCRv5_mobile_rec")
+REC_MODEL_NAME = "PP-OCRv5_mobile_rec"
 # 文字检测模型
 DET_MODEL_PATH = os.path.join(PROJECT_PATH, "models", "PP-OCRv5_mobile_det")
+DET_MODEL_NAME = "PP-OCRv5_mobile_det"
 
 
