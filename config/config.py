@@ -2,6 +2,7 @@
 import os
 import sys
 
+
 # 动态获取，开发环境和打包后的路径都要适配，否则 ocr 模型路径有问题
 def get_project_path():
     # Pyinstall 提供的方法，获取打包后生成的目录
@@ -10,6 +11,7 @@ def get_project_path():
     else:
         # 非打包情况下，正常返回根目录
         return os.path.dirname(os.getcwd())
+
 
 # 项目的根目录
 PROJECT_PATH = get_project_path()
@@ -28,6 +30,9 @@ YELLOW_HIGH = (19, 191, 255)
 WHITE_BLOCK_AREA_MIN = 10
 WHITE_BLOCK_AREA_MAX = 100
 WHITE_BLOCK_SOLIDITY = 0.5
+
+# 执行钓鱼控制的 x 偏移阈值
+OFFSET_THRESHOLD = 5
 
 # 钓鱼游戏的体力条范围
 point1 = (670, 70)

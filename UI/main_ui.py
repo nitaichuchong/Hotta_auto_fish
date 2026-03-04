@@ -38,8 +38,9 @@ class MainUI:
         self.tips_label = None
         self.create_widgets()
 
-        # OCR 实例
+        # OCR 相关
         self.ocr = None
+        self.ocr_lock = threading.Lock()  # OCR 线程锁
 
         # 线程控制
         self.fish_thread = None
@@ -119,36 +120,29 @@ class MainUI:
             # 需要先切换到游戏窗口，否则键盘控制会在脚本窗口上执行，无意义
             self.activate_game_window()
 
-            # 检查线程是否存活
-            # 若线程未完全退出就再次点击 “开始”，会创建多个控制线程，这里先做判断停止这些线程
-            if self.fish_thread and self.fish_thread.is_alive():
-                self.stop_flag.set()
-                self.fish_thread.join(timeout=2)
-            if self.ocr_thread and self.ocr_thread.is_alive():
-                self.stop_flag.set()
-                self.ocr_thread.join(timeout=2)
+            # 先调用方法确保所有旧线程完全退出，然后才继续执行逻辑
+            self.stop_all_threads()
 
             # 重置停止标记和事件
             self.stop_flag.clear()
             self.pause_event.clear()
             self.resume_event.clear()
 
-            # 启动钓鱼控制线程
-            self.fish_thread = threading.Thread(
-                target=fish_game,
-                daemon=True,
-                # 传递控制事件
-                args=(self.pause_event, self.resume_event, self.stop_flag,),
-            )
-            self.fish_thread.start()
+            # 验证 OCR 实例是否为新实例
+            print(f"ocr id = {id(self.ocr)}")
 
-            # 启动耐力值识别线程
-            self.ocr_thread = threading.Thread(
-                target=self.run_ocr,
-                daemon=True,
-                args=(self.ocr,),
-            )
-            self.ocr_thread.start()
+            if self.ocr is None:
+                print("ocr 实例已被释放，需再次初始化")
+                try:
+                    self.ocr = ocr_init()
+                    print("OCR实例重新初始化成功")
+                except Exception as e:
+                    self.status_label.config(text=f"OCR初始化失败：{e}")
+                    print(f"OCR初始化失败：{e}")
+                    return
+
+            # 启动线程
+            self.start_all_threads()
 
             # 状态更新
             self.button.config(text="停止执行")
@@ -158,17 +152,8 @@ class MainUI:
 
         # 终止执行，必须把线程全部停止
         elif self.status == StatusEnum.FINISH:
-            # 先发送停止标记，因为其在最外层执行控制，然后宣布解除暂停，最后发送恢复标记
-            # 与实际执行的逻辑顺序尽可能保持一致
-            self.stop_flag.set()
-            self.pause_event.clear()
-            self.resume_event.set()
-
-            # 等待线程结束
-            if self.fish_thread and self.fish_thread.is_alive():
-                self.fish_thread.join(timeout=2)
-            if self.ocr_thread and self.ocr_thread.is_alive():
-                self.ocr_thread.join(timeout=2)
+            # 确保停止所有线程
+            self.stop_all_threads()
 
             # 状态更新
             self.button.config(text="再次开始")
@@ -177,28 +162,102 @@ class MainUI:
             self.endurance_label.config(text="已停止检测")
             self.status = StatusEnum.START
 
+    def start_all_threads(self):
+        """将线程启动单独放置，从 toggle_button 中解耦"""
+        # 启动钓鱼控制线程
+        self.fish_thread = threading.Thread(
+            target=fish_game,
+            daemon=True,
+            # 传递控制事件
+            args=(self.pause_event, self.resume_event, self.stop_flag,),
+        )
+        self.fish_thread.start()
+
+        # 启动 OCR 线程
+        self.ocr_thread = threading.Thread(
+            target=self.run_ocr,
+            daemon=True,
+            args=(self.ocr,),
+        )
+        self.ocr_thread.start()
+
+    def stop_all_threads(self):
+        """
+        统一停止所有线程，确保完全退出，
+        若线程未完全退出就再次点击 “开始”，会创建多个控制线程，这里先做判断停止这些线程
+        """
+        if self.stop_flag.is_set():
+            return
+
+        print("开始停止所有线程...")
+
+        # 停止所有线程
+        self.stop_flag.set()
+        self.pause_event.clear()
+        self.resume_event.set()  # 先清除暂停标记，再唤醒执行
+
+        # 等待钓鱼控制线程退出
+        if self.fish_thread and self.fish_thread.is_alive():
+            # 最多等待五秒，进行超时判定是否已退出线程
+            self.fish_thread.join(timeout=5)
+            if self.fish_thread.is_alive():
+                print("钓鱼线程未正常退出，可能残留按键操作")
+            else:
+                print("钓鱼线程已停止")
+
+        # 等待 OCR 线程退出
+        if self.ocr_thread and self.ocr_thread.is_alive():
+            self.ocr_thread.join(timeout=1)
+            if self.ocr_thread.is_alive():
+                print("OCR线程未正常退出")
+            else:
+                print("OCR线程已停止")
+
+        # 重置线程对象
+        self.fish_thread = None
+        self.ocr_thread = None
+
+        # 释放 OCR 实例
+        self.ocr = None
+        print("所有线程已停止，OCR实例已释放")
+
     def run_ocr(self, ocr):
         """
         持续通过 ocr 进行耐力值检测的子线程，在检测到耐力值为 0 时，会设置暂停标记，
         然后调用收杆操作，直到暂停标记被解除
         :param ocr: 获取的 ocr 实例
         """
+        print("OCR线程启动")
         while not self.stop_flag.is_set():
             # 若收到暂停信号则等待
             if self.pause_event.is_set():
+                print("OCR线程进入暂停状态")
                 # 等待恢复信号
                 self.resume_event.wait()
                 # 重置恢复信号为 False
                 self.resume_event.clear()
+                print("OCR线程恢复执行")
+                # 再次确认停止标记是否已设置，如已设置直接退出，防止后续逻辑被执行
+                if self.stop_flag.is_set():
+                    break
 
-            # 执行 ocr 检测，获取耐力值
-            ocr_result = ocr_recognition(ocr)
+            # OCR 识别结果，通过加锁保证单线程执行，同时进行异常捕获
+            try:
+                with self.ocr_lock:
+                    ocr_result = ocr_recognition(ocr)
+            except Exception as e:
+                print(f"OCR识别异常: {e}")
+                ocr_result = None
+                sleep(0.2)  # 异常时休眠，避免持续报错
+                continue
+
             if ocr_result is not None:
                 # 确认不为空后再解包
                 fish_endurance, total_endurance = ocr_result
-                # 立即更新 UI
+                # 异步调用，通过主线程更新 UI
                 self.root.after(0, self.endurance_label_update, fish_endurance, total_endurance)
 
+                # 耐力值为 0 时收杆
                 if fish_endurance == 0:
                     # 设置暂停标记
                     self.pause_event.set()
@@ -207,6 +266,8 @@ class MainUI:
 
             # 避免循环占用资源过高，且实际游戏也不需要频繁检测
             sleep(1)
+
+        print("OCR线程停止")
 
     def endurance_label_update(self, endurance1, endurance2):
         """
@@ -274,14 +335,7 @@ class MainUI:
     def on_close(self):
         """关闭窗口时确保所有线程退出"""
         # 跟终止按钮执行一样的操作
-        self.stop_flag.set()
-        self.pause_event.clear()
-        self.resume_event.set()
-
-        if self.fish_thread and self.fish_thread.is_alive():
-            self.fish_thread.join(timeout=2)
-        if self.ocr_thread and self.ocr_thread.is_alive():
-            self.ocr_thread.join(timeout=2)
+        self.stop_all_threads()
 
         self.root.destroy()
 

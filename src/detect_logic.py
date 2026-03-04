@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-import pyautogui
+import mss
 
 from config import YELLOW_LOW, YELLOW_HIGH, FISH_GAME_REGION, WHITE_BLOCK_AREA_MIN, WHITE_BLOCK_AREA_MAX, \
     WHITE_BLOCK_SOLIDITY
@@ -9,7 +9,7 @@ from config import YELLOW_LOW, YELLOW_HIGH, FISH_GAME_REGION, WHITE_BLOCK_AREA_M
 def capture_and_convert(region=FISH_GAME_REGION):
     """为减少重复代码提取的共同方法，截图并返回所需要的格式
 
-    :param region: 从 config 中读取的截图区域
+    :param region: 从 config 中读取的截图区域，[x, y, w, h]
     :returns:
         bgr_frame: 经过 np 处理后的 BGR 格式截图
         hsv_frame: 经过 np 处理后的 HSV 格式截图
@@ -21,13 +21,27 @@ def capture_and_convert(region=FISH_GAME_REGION):
     if any(v < 0 for v in region):
         raise ValueError("region参数的数值不能为负数")
 
-    screenshot = pyautogui.screenshot(region=region)
-    screenshot = np.array(screenshot)
-    bgr_frame = cv2.cvtColor(screenshot, cv2.COLOR_RGB2BGR)
-    hsv_frame = cv2.cvtColor(screenshot, cv2.COLOR_RGB2HSV)
-    region_x = region[0]
+    try:
+        with mss.mss() as sct:
+            # 构造 mss 识别的 monitor 格式（top=y, left=x, width/height 不变）
+            monitor = {
+                "top": region[1],
+                "left": region[0],
+                "width": region[2],
+                "height": region[3]
+            }
+            # 截图直接返回 numpy 数组，默认为 BGRA 格式，A 即 Alpha
+            img = np.array(sct.grab(monitor))
+            # 去掉 Alpha 通道（游戏截图无透明层），得到 BGR 格式
+            bgr_frame = img[:, :, :3]
+            # 直接转换为 HSV 格式
+            hsv_frame = cv2.cvtColor(bgr_frame, cv2.COLOR_BGR2HSV)
+            region_x = region[0]
+            return bgr_frame, hsv_frame, region_x
 
-    return bgr_frame, hsv_frame, region_x
+    except Exception as e:
+        print(f"截图失败：{e}")
+        return None, None, None
 
 
 def get_yellow_area_range():
@@ -39,6 +53,9 @@ def get_yellow_area_range():
     """
     # 截图并转换为 HSV 颜色空间
     _, hsv_frame, region_x = capture_and_convert()
+
+    if hsv_frame is None:
+        return None
 
     # 读取并创建黄色的 mask
     mask = cv2.inRange(hsv_frame, YELLOW_LOW, YELLOW_HIGH)

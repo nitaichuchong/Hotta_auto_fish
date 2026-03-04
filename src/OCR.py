@@ -1,18 +1,19 @@
 import os
 
-from config import FISH_ENDURANCE_REGION, REC_MODEL_PATH, DET_MODEL_PATH
-from config.config import REC_MODEL_NAME, DET_MODEL_NAME
-from src.detect_logic import capture_and_convert
-
 # 在导入 PaddleOCR 前设置为 True 以跳过模型源链接检查
 os.environ["PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK"] = "True"
+
+from config import (
+    FISH_ENDURANCE_REGION, REC_MODEL_PATH,
+    DET_MODEL_PATH, REC_MODEL_NAME, DET_MODEL_NAME)
+from src.detect_logic import capture_and_convert
 from paddleocr import PaddleOCR
 
 
 def ocr_init():
     """
-    进行 paddleocr 初始化，参数含义请参考官方
-    :return: ocr 实例
+    进行 PaddleOCR 初始化，参数含义请参考官方
+    :return: 初始化后的 PaddleOCR 实例
     """
     # 初始化 PaddleOCR，通过懒加载执行
     ocr = PaddleOCR(
@@ -29,23 +30,28 @@ def ocr_init():
 
 def ocr_recognition(ocr):
     """
-    通过 OCR 识别指定区域的文字和数字，返回耐力值，
-    若返回为 None 则说明未检测或检测失败
+    通过 OCR 识别指定区域的数字，返回耐力值
     :param ocr: 初始化的 ocr 实例
-    :returns:
+    :return:
         current_endurance: 剩余的鱼耐力值
         total_endurance: 鱼总共的耐力值
-        None: 异常处理抛出的结果
+        None: 未检测到有效耐力值/识别过程异常
     """
-    # paddleocr 的支持格式是 BGR
-    bgr_frame, _, _, = capture_and_convert(FISH_ENDURANCE_REGION)
+    # 返回耐力值，用 try 包裹逻辑统一进行异常处理
+    try:
+        # paddleocr 的支持格式是 BGR
+        bgr_frame = capture_and_convert(FISH_ENDURANCE_REGION)[0]
 
-    result = ocr.predict(input=bgr_frame)
+        result = ocr.predict(input=bgr_frame)
 
-    # 返回耐力值并作异常处理
-    if result and len(result) > 0:
+        # 返回耐力值并作异常处理
+        if not result or len(result) == 0:
+            return None
+
         text_list = result[0]['rec_texts']
-        if not text_list:
+
+        # 检查是否为空值
+        if not text_list or len(text_list) == 0:
             return None
 
         # 检查是否含有分隔符
@@ -58,18 +64,30 @@ def ocr_recognition(ocr):
         if len(parts) != 2:
             return None
 
-        # 检查是否有任意一项出错
+        # 检查是否有任意一项出错，过滤非数字字符
         current_str = ''.join(filter(str.isdigit, parts[0]))
         total_str = ''.join(filter(str.isdigit, parts[1]))
         if not current_str or not total_str:
             return None
 
-        # 返回耐力值
-        try:
-            current_endurance = int(current_str)
-            total_endurance = int(total_str)
-            return current_endurance, total_endurance
-        except ValueError:
-            return None
+        current_endurance = int(current_str)
+        total_endurance = int(total_str)
+        return current_endurance, total_endurance
 
-    return None
+    # 捕获所有可能的异常，确保函数返回 None 而非崩溃
+    # 分别打印异常日志，便于调试
+    except ValueError as e:
+        print(f"OCR ValueError: {e}")
+        return None
+    except IndexError as e:
+        print(f"OCR IndexError: {e}")
+        return None
+    except TypeError as e:
+        print(f"OCR TypeError: {e}")
+        return None
+    except KeyError as e:
+        print(f"OCR KeyError: {e}")
+        return None
+    except AttributeError as e:
+        print(f"OCR AttributeError: {e}")
+        return None

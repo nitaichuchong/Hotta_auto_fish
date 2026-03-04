@@ -40,7 +40,7 @@ def build_exe():
     params = [
         get_main_py_path(),  # 你的主程序入口
         "-D",  # 单目录打包
-        # "-w",  # 无控制台（GUI程序）
+        "-w",  # 无控制台（GUI程序）
         "--name", "幻塔自动钓鱼",  # 自定义程序名称
 
         "--add-data", model_path,
