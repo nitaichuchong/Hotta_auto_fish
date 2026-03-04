@@ -2,12 +2,13 @@
 import os
 import sys
 
-
+# 动态获取，开发环境和打包后的路径都要适配，否则 ocr 模型路径有问题
 def get_project_path():
+    # Pyinstall 提供的方法，获取打包后生成的目录
     if hasattr(sys, '_MEIPASS'):
         return os.path.join(sys._MEIPASS)
     else:
-        # 开发环境：返回当前脚本所在的目录（可根据你的项目结构调整）
+        # 非打包情况下，正常返回根目录
         return os.path.dirname(os.getcwd())
 
 # 项目的根目录

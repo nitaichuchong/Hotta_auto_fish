@@ -6,15 +6,17 @@ import tkinter as tk
 os.environ["PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK"] = "True"
 from paddleocr import PaddleOCR
 
-# 核心函数：动态获取程序根目录（兼容开发/打包双环境）
+
+# 动态获取程序根目录（兼容开发/打包双环境）
 def get_program_root():
-    # 判断是否为Pyinstall打包后的运行环境
+    # 判断是否为 Pyinstall 打包后的运行环境
     if hasattr(sys, '_MEIPASS'):
         # 打包后：返回exe文件所在的目录
         return os.path.join(sys._MEIPASS)
     else:
         # 开发环境：返回当前脚本所在的目录（可根据你的项目结构调整）
         return os.path.dirname(os.path.abspath(__file__))
+
 
 # 拼接路径，彻底替换所有硬编码的绝对路径
 root_dir = get_program_root()
@@ -26,6 +28,7 @@ REC_MODEL_NAME = "PP-OCRv5_mobile_rec"
 # 文字检测模型
 DET_MODEL_PATH = os.path.join(project_dir, "models", "PP-OCRv5_mobile_det")
 DET_MODEL_NAME = "PP-OCRv5_mobile_det"
+
 
 def ocr_init():
     print(f"rec_model_dir: {REC_MODEL_PATH}\n"
@@ -49,6 +52,7 @@ def ocr_init():
 
 class TestUI:
     def __init__(self):
+        """基本上是从主程序的 UI 里复制粘贴来的，只做 ocr 初始化测试"""
         self.root = tk.Tk()
         self.root.title("打包后的UI测试")
         self.root.geometry("400x400")

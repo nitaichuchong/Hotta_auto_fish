@@ -11,6 +11,7 @@ from config import PROJECT_PATH, DIST_PATH, WORK_PATH, SPEC_PATH
 os.environ["PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK"] = "True"
 import paddlex
 
+
 # 获取项目根目录的绝对路径
 def get_main_py_path():
     """获取目标的 main 文件在项目中的路径"""
@@ -28,18 +29,14 @@ def clean_old_build():
 
 # 核心打包逻辑
 def build_exe():
-    # 1. 清理旧文件
+    """建议看 test 里的注释，不写第二遍了"""
     clean_old_build()
 
-    # 1. 模型源路径（你的项目根目录下的models）
     model_source_path = os.path.join(PROJECT_PATH, "models")
-    # 2. 关键修改：目标路径指定为 "."（exe所在目录）下的models
-    # 格式：源路径;./models （Windows） / 源路径:./models（Linux/Mac）
     sep = ";" if sys.platform == "win32" else ":"
     target = "./models"
     model_path = f"{model_source_path}{sep}{target}"
 
-    # 2. 定义打包参数（对应命令行参数）
     params = [
         get_main_py_path(),  # 你的主程序入口
         "-D",  # 单目录打包
@@ -64,7 +61,6 @@ def build_exe():
     for dep in deps_need:
         params += ["--copy-metadata", dep]
 
-    # 3. 执行打包
     run(params)
 
 

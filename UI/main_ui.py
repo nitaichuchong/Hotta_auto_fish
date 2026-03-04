@@ -1,4 +1,3 @@
-import sys
 import threading
 import tkinter as tk
 from enum import Enum
@@ -21,6 +20,8 @@ class StatusEnum(Enum):
 
 
 class MainUI:
+    """主程序"""
+
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("自动钓鱼")
@@ -34,6 +35,7 @@ class MainUI:
         self.label = None
         self.status_label = None
         self.endurance_label = None
+        self.tips_label = None
         self.create_widgets()
 
         # OCR 实例
@@ -49,11 +51,8 @@ class MainUI:
         # 控制状态的状态机
         self.status = StatusEnum.INIT
 
-        # 用来标记当前按键状态（用状态机思想控制，清晰并简化按键逻辑）
-        self.current_key = None
-        self.target_key = None
-
     def create_widgets(self):
+        """创建 UI 中的所有组件"""
         # 主按钮，将初始化等所有按键通过状态切换集成到一个按钮上
         self.button = tk.Button(
             self.root,
@@ -95,8 +94,8 @@ class MainUI:
         self.tips_label = tk.Label(
             self.root,
             text="请不要让该程序窗口遮挡住鱼的耐力值和体力条\n"
-                 "先初始化，然后第一下挥杆自己点，再点击开始执行\n"
-                 "开始执行只有鼠标跟键盘就别乱点了，目前还没兼容",
+                 "先初始化，然后每次开始执行时的挥杆自己点\n"
+                 "开始执行后鼠标跟键盘就别乱点了，目前还没兼容",
             width=40,
             anchor="center",
             fg="green",
@@ -104,6 +103,8 @@ class MainUI:
         self.tips_label.grid(row=3, column=0, columnspan=2, padx=10, pady=10)
 
     def toggle_button(self):
+        """通过最简单的状态机处理判断条件和转化，以实现单个按钮集成多个操作，
+        分为初始化、执行、停止三种按钮和对应的逻辑，详细的建议直接看里面各自的注释"""
         # 初始化
         if self.status == StatusEnum.INIT:
             # 获取 ocr 实例
@@ -112,19 +113,20 @@ class MainUI:
             self.label.config(text="初始化完毕！")
             self.status_label.config(text="初始化完成，等待执行")
             self.status = StatusEnum.START
+
         # 初始化完后，启动控制钓鱼和耐力值识别的线程
         elif self.status == StatusEnum.START:
             # 需要先切换到游戏窗口，否则键盘控制会在脚本窗口上执行，无意义
-
             self.activate_game_window()
+
             # 检查线程是否存活
-            # 若线程未完全退出就再次点击 “开始”，会创建多个控制线程
+            # 若线程未完全退出就再次点击 “开始”，会创建多个控制线程，这里先做判断停止这些线程
             if self.fish_thread and self.fish_thread.is_alive():
                 self.stop_flag.set()
-                self.fish_thread.join(timeout=1)
+                self.fish_thread.join(timeout=2)
             if self.ocr_thread and self.ocr_thread.is_alive():
                 self.stop_flag.set()
-                self.ocr_thread.join(timeout=1)
+                self.ocr_thread.join(timeout=2)
 
             # 重置停止标记和事件
             self.stop_flag.clear()
@@ -136,7 +138,7 @@ class MainUI:
                 target=fish_game,
                 daemon=True,
                 # 传递控制事件
-                args=(self.pause_event, self.resume_event, self.stop_flag),
+                args=(self.pause_event, self.resume_event, self.stop_flag,),
             )
             self.fish_thread.start()
 
@@ -156,10 +158,11 @@ class MainUI:
 
         # 终止执行，必须把线程全部停止
         elif self.status == StatusEnum.FINISH:
-            # 停止线程
+            # 先发送停止标记，因为其在最外层执行控制，然后宣布解除暂停，最后发送恢复标记
+            # 与实际执行的逻辑顺序尽可能保持一致
             self.stop_flag.set()
+            self.pause_event.clear()
             self.resume_event.set()
-            self.pause_event.clear()  # 这里应该解除暂停，确保线程能够收到停止标记
 
             # 等待线程结束
             if self.fish_thread and self.fish_thread.is_alive():
@@ -175,6 +178,11 @@ class MainUI:
             self.status = StatusEnum.START
 
     def run_ocr(self, ocr):
+        """
+        持续通过 ocr 进行耐力值检测的子线程，在检测到耐力值为 0 时，会设置暂停标记，
+        然后调用收杆操作，直到暂停标记被解除
+        :param ocr: 获取的 ocr 实例
+        """
         while not self.stop_flag.is_set():
             # 若收到暂停信号则等待
             if self.pause_event.is_set():
@@ -188,52 +196,74 @@ class MainUI:
             if ocr_result is not None:
                 # 确认不为空后再解包
                 fish_endurance, total_endurance = ocr_result
-            # 执行标签更新
-                self.endurance_label_update(fish_endurance, total_endurance)
                 # 立即更新 UI
-                self.root.update()
+                self.root.after(0, self.endurance_label_update, fish_endurance, total_endurance)
 
                 if fish_endurance == 0:
                     # 设置暂停标记
                     self.pause_event.set()
                     # 执行收杆流程
-                    self.rod_recovery_process()
+                    self.root.after(0, self.rod_recovery_process)
+
             # 避免循环占用资源过高，且实际游戏也不需要频繁检测
             sleep(1)
 
-
     def endurance_label_update(self, endurance1, endurance2):
         """
-        执行耐力值显示标签更新
+        执行耐力值显示标签更新，该方法被 after 异步更新，如果子线程直接操作主线程 UI 会引发冲突
         :param endurance1: 鱼的当前耐力值
         :param endurance2: 鱼的总耐力值
-        :return: None
         """
-        # 主线程异步更新，子线程直接操作主线程 UI 会引发冲突
-        self.root.after(0, lambda: self.endurance_label.config(text=f"{endurance1}/{endurance2}"))
+        self.endurance_label.config(text=f"{endurance1}/{endurance2}")
 
     def rod_recovery_process(self):
+        """
+        由于收杆期间每一步操作都可能按下停止执行，并且每一步操作都需要延时来符合游戏实际流程，
+        所以将其拆分成多步并用 after 连接，保证作为单线程的 tk 窗口不会被子线程直接操作主线程 UI，
+        或是 sleep 导致意外 bug
+        """
+        # 若已触发停止，直接返回
+        if self.stop_flag.is_set():
+            return
+
         # 确保操作在游戏窗口执行
         self.activate_game_window()
 
+        # 此时是在被主线程调用更新 UI ，为安全操作
         self.status_label.config(text="正在收杆中...")
-        self.root.update()
-        pyautogui.press("1")    # 收杆
-        sleep(2)  # 收杆耗时
-        pyautogui.click()  # 需要点击一下才行
+
+        if not self.stop_flag.is_set():
+            pyautogui.press("1")  # 收杆
+            # 采用 after 替代 sleep，避免意外的阻塞导致的 bug
+            self.root.after(2000, self._continue_recovery)
+
+    def _continue_recovery(self):
+        """收杆流程的第二步"""
+        if self.stop_flag.is_set():
+            return
+
+        pyautogui.click()
+        self.root.after(1000, self._finalize_recovery)
+
+    def _finalize_recovery(self):
+        """收杆流程的第三步"""
+        if self.stop_flag.is_set():
+            return
 
         self.status_label.config(text="正在准备下一杆...")
-        self.root.update()
-        pyautogui.press("1")  # 按下键盘 1 开始
-        sleep(2)  # 开始后会有一个动画时间
+        pyautogui.press("1")
+        self.root.after(2000, self._resume_fishing)
 
-        # 清除暂停标记，打开恢复执行
+    def _resume_fishing(self):
+        """已完成收杆，清除暂停标记，并恢复线程执行"""
+        if self.stop_flag.is_set():
+            return
+
         self.pause_event.clear()
         self.resume_event.set()
-        self.root.update()
 
     def activate_game_window(self):
-        # 激活游戏窗口，确保操作在游戏窗口上执行
+        """激活游戏窗口，确保操作在游戏窗口上执行"""
         try:
             game_window = gw.getWindowsWithTitle("幻塔")[0]
             game_window.activate()
@@ -245,8 +275,8 @@ class MainUI:
         """关闭窗口时确保所有线程退出"""
         # 跟终止按钮执行一样的操作
         self.stop_flag.set()
+        self.pause_event.clear()
         self.resume_event.set()
-        self.pause_event.clear()  # 这里应该解除暂停，确保线程能够收到停止标记
 
         if self.fish_thread and self.fish_thread.is_alive():
             self.fish_thread.join(timeout=2)

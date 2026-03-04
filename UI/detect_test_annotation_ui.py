@@ -9,7 +9,15 @@ from test.detect_test_annotation import DetectionRunner
 
 
 class DetectionUI:
+    """
+    专门为标注结果测试写的 UI 类，通过回调函数实现标注结果在 UI 上的更新，
+    通过子线程启动检测逻辑，实际上没有必要专门开个 UI 目录，毕竟不是
+    pyqt 那样的结构，我都用 tk 了我还分那么清楚，我 tk 不白用了？
+    但还是分了
+    """
+
     def __init__(self):
+
         self.root = tk.Tk()
         self.root.title("检测逻辑测试")
         self.root.geometry("800x200")
@@ -76,11 +84,23 @@ class DetectionUI:
             self.button.config(text="开始")
             self.label.config(text="已终止")
 
+    def _on_image_update_trigger(self):
+        """回调函数触发的扳机，出发后异步调用 UI 更新（避免跨线程操作）"""
+        # 用 after 将更新操作放到主线程执行
+        self.root.after(0, self._do_update_image)
+
+    def _do_update_image(self):
+        """执行图片更新逻辑，并重置状态标记"""
+        if self.runner.image_updated:
+            # 执行 UI 更新
+            self._update_image(self.runner.annotated_image)
+            # 重置状态标记（标记在子线程内）
+            self.runner.image_updated = False
+
     def _update_image(self, annotated_image):
         """
         更新 UI 图片，通过回调函数的方式提醒本函数进行更新
-        :param annotated_image: 从 self.runner 传回
-        :return: None
+        :param annotated_image: 从 self.runner 传回的带标注结果的图像
         """
         # 初始化时将图片置空
         if annotated_image is None:
@@ -98,19 +118,6 @@ class DetectionUI:
         # 保留对 tk_image 的引用，否则可能被回收导致不显示
         self.image_label.tk_image = tk_image
         self.image_label.configure(image=tk_image)
-
-    def _on_image_update_trigger(self):
-        """由检测线程触发，异步调用UI更新（避免跨线程操作）"""
-        # 用 after 将更新操作放到主线程执行
-        self.root.after(0, self._do_update_image)
-
-    def _do_update_image(self):
-        """执行图片更新逻辑，并重置状态标记"""
-        if self.runner.image_updated:
-            # 执行 UI 更新
-            self._update_image(self.runner.annotated_image)
-            # 重置状态标记
-            self.runner.image_updated = False
 
     def on_close(self):
         """关闭窗口时确保终止检测"""

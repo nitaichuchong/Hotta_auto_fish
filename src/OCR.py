@@ -32,10 +32,12 @@ def ocr_recognition(ocr):
     通过 OCR 识别指定区域的文字和数字，返回耐力值，
     若返回为 None 则说明未检测或检测失败
     :param ocr: 初始化的 ocr 实例
-    :return:
-        current_endurance:  剩余的鱼耐力值
-        total_endurance:    鱼总共的耐力值
+    :returns:
+        current_endurance: 剩余的鱼耐力值
+        total_endurance: 鱼总共的耐力值
+        None: 异常处理抛出的结果
     """
+    # paddleocr 的支持格式是 BGR
     bgr_frame, _, _, = capture_and_convert(FISH_ENDURANCE_REGION)
 
     result = ocr.predict(input=bgr_frame)
@@ -45,19 +47,23 @@ def ocr_recognition(ocr):
         text_list = result[0]['rec_texts']
         if not text_list:
             return None
+
         # 检查是否含有分隔符
         endurance_text = text_list[0].strip()
         if '/' not in endurance_text:
             return None
+
         # 检查是否符合格式
         parts = endurance_text.split('/')
         if len(parts) != 2:
             return None
+
         # 检查是否有任意一项出错
         current_str = ''.join(filter(str.isdigit, parts[0]))
         total_str = ''.join(filter(str.isdigit, parts[1]))
         if not current_str or not total_str:
             return None
+
         # 返回耐力值
         try:
             current_endurance = int(current_str)
