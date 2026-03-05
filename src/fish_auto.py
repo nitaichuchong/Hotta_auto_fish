@@ -47,8 +47,7 @@ def fish_game(pause_event, resume_event, stop_flag):
 
         # 未检测到偏移则跳过防止报错
         if offset_x is None:
-            print("未检测到黄色区域/玩家方块，跳过本次循环")
-            sleep(0.05)
+            sleep(0.1)
             continue
 
         if offset_x > OFFSET_THRESHOLD:

@@ -6,7 +6,7 @@ from time import sleep
 import pyautogui
 import pygetwindow as gw
 
-from src.OCR import ocr_init, ocr_recognition
+from src.ocr_main import ocr_init, ocr_recognition
 from src.fish_auto import fish_game
 
 
@@ -262,7 +262,7 @@ class MainUI:
                     # 设置暂停标记
                     self.pause_event.set()
                     # 执行收杆流程
-                    self.root.after(0, self.rod_recovery_process)
+                    self.root.after(1000, self.rod_recovery_process)
 
             # 避免循环占用资源过高，且实际游戏也不需要频繁检测
             sleep(1)

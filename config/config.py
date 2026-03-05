@@ -46,10 +46,19 @@ DIST_PATH = os.path.join(PROJECT_PATH, "build", "dist")
 WORK_PATH = os.path.join(PROJECT_PATH, "build", "work")
 SPEC_PATH = os.path.join(PROJECT_PATH, "build")
 
+# 模型选择开关："paddle"或"tesseract"
+OCR_TYPE = "tesseract"
+
 # paddleocr 模型目录
 # 文字识别模型
-REC_MODEL_PATH = os.path.join(PROJECT_PATH, "models", "PP-OCRv5_mobile_rec")
-REC_MODEL_NAME = "PP-OCRv5_mobile_rec"
+REC_MODEL_PATH = os.path.join(PROJECT_PATH, "models", "en_PP-OCRv5_mobile_rec")
+REC_MODEL_NAME = "en_PP-OCRv5_mobile_rec"
 # 文字检测模型
 DET_MODEL_PATH = os.path.join(PROJECT_PATH, "models", "PP-OCRv5_mobile_det")
 DET_MODEL_NAME = "PP-OCRv5_mobile_det"
+
+# Tesseract 模型目录
+# Tesseract 本地路径
+TESSERACT_PATH = os.path.join(PROJECT_PATH, "models", "tesseract")
+# Tesseract 语言包路径
+TESSDATA_PREFIX = os.path.join(TESSERACT_PATH, "tessdata")
