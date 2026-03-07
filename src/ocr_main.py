@@ -9,6 +9,9 @@ from src.utils.ocr_tesseract import tesseract_ocr_recognition
 from config import FISH_ENDURANCE_REGION, OCR_TYPE, OCR_DEBUG, OCR_DEBUG_SAVE_PATH
 from src.detect_logic import capture_and_convert
 
+# 调试时用
+OCR_DEBUG_IMAGE_COUNT = 0
+
 
 def ocr_init():
     """
@@ -29,23 +32,46 @@ def preprocess_frame(bgr_frame):
     :param bgr_frame: 传入的 BGR 格式图像
     :return: thresh : 完成预处理后的图像
     """
+    # 放大图像，让 OCR 识别效果更佳
+    h, w = bgr_frame.shape[:2]
+    scale = 2
+    frame_scaled = cv2.resize(bgr_frame, (w * scale, h * scale), interpolation=cv2.INTER_CUBIC)
 
     # 预处理，先转为灰度图
-    gray = cv2.cvtColor(bgr_frame, cv2.COLOR_BGR2GRAY)
+    gray = cv2.cvtColor(frame_scaled, cv2.COLOR_BGR2GRAY)
 
-    # 形态开运算
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))  # 创建结构元素
-    # 先腐蚀后膨胀的组合操作，用于去除微小噪点
-    thresh = cv2.morphologyEx(gray, cv2.MORPH_OPEN, kernel, iterations=2)
+    # 局部对比度增强
+    clahe = cv2.createCLAHE(clipLimit=2, tileGridSize=(4, 4))
+    contrast_enhanced = clahe.apply(gray)
 
+    # 黑白二值化
+    _, white_mask = cv2.threshold(
+        contrast_enhanced,
+        thresh=235,  # 阈值（可调整，比如230/245）
+        maxval=255,  # 阈值上限
+        type=cv2.THRESH_BINARY_INV
+    )
+
+    # # 开运算，去除小噪点
+    open_kernel = np.ones((2, 2), np.uint8)
+    final1 = cv2.morphologyEx(white_mask, cv2.MORPH_OPEN, open_kernel, iterations=1)
+    # # 闭运算，补全缺口
+    close_kernel = np.ones((1, 1), np.uint8)
+    final2 = cv2.morphologyEx(final1, cv2.MORPH_CLOSE, close_kernel, iterations=1)
+
+    # 调试部分，保存每个步骤的处理结果方便调整参数
+    global OCR_DEBUG_IMAGE_COUNT
     if OCR_DEBUG:
-        import time
-        timestamp = int(time.time())
-        cv2.imwrite(os.path.join(OCR_DEBUG_SAVE_PATH, f"0_bgr_{timestamp}.png"), bgr_frame)
-        cv2.imwrite(os.path.join(OCR_DEBUG_SAVE_PATH, f"1_gray_{timestamp}.png"), gray)
-        cv2.imwrite(os.path.join(OCR_DEBUG_SAVE_PATH, f"2_final_{timestamp}.png"), thresh)
+        cv2.imwrite(os.path.join(OCR_DEBUG_SAVE_PATH, f"0_bgr_{OCR_DEBUG_IMAGE_COUNT}.png"), bgr_frame)
+        cv2.imwrite(os.path.join(OCR_DEBUG_SAVE_PATH, f"1_gray_{OCR_DEBUG_IMAGE_COUNT}.png"), gray)
+        cv2.imwrite(os.path.join(OCR_DEBUG_SAVE_PATH, f"2_contrast_enhanced_{OCR_DEBUG_IMAGE_COUNT}.png"),
+                    contrast_enhanced)
+        cv2.imwrite(os.path.join(OCR_DEBUG_SAVE_PATH, f"3_thresh_{OCR_DEBUG_IMAGE_COUNT}.png"), white_mask)
+        cv2.imwrite(os.path.join(OCR_DEBUG_SAVE_PATH, f"4_final1_{OCR_DEBUG_IMAGE_COUNT}.png"), final1)
+        cv2.imwrite(os.path.join(OCR_DEBUG_SAVE_PATH, f"5_final2_{OCR_DEBUG_IMAGE_COUNT}.png"), final2)
+        OCR_DEBUG_IMAGE_COUNT += 1
 
-    return thresh
+    return final2
 
 
 def check_ocr_result(result):
@@ -102,7 +128,7 @@ def ocr_recognition(ocr):
             return None
 
         result = None
-        # 预处理图像
+        # 对图像进行预处理
         thresh = preprocess_frame(bgr_frame)
 
         # PaddleOCR 需要3通道输入，把二值化后的单通道转回3通道

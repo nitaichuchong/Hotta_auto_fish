@@ -1,6 +1,7 @@
 import os
 
 import cv2
+import numpy as np
 
 from config import OCR_DEBUG, OCR_DEBUG_SAVE_PATH
 
@@ -11,41 +12,43 @@ def preprocess(bgr_frame):
     """
     对图像预处理过程的测试，方便调参数等等
     """
+    h, w = bgr_frame.shape[:2]
+    scale = 2
+    frame_scaled = cv2.resize(bgr_frame, (w * scale, h * scale), interpolation=cv2.INTER_CUBIC)
 
     # 预处理，先转为灰度图
-    gray = cv2.cvtColor(bgr_frame, cv2.COLOR_BGR2GRAY)
+    gray = cv2.cvtColor(frame_scaled, cv2.COLOR_BGR2GRAY)
 
-    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(2, 2))
+    # 局部对比度增强
+    clahe = cv2.createCLAHE(clipLimit=2, tileGridSize=(4, 4))
     contrast_enhanced = clahe.apply(gray)
 
-    # 二值化（黑白分割，让文字和背景彻底分离）
-    # 自适应阈值二值化，适配轻微光照不均，比全局阈值更鲁棒
-    # 你也可以替换为下方注释的OTSU大津法，背景均匀时效果同样好
-    thresh = cv2.adaptiveThreshold(
+    # 该方案适合复杂环境下提高下限的情况，在本项目中不如固定阈值方案
+    # 自适应阈值（适配光照不均 / 渐变背景），参数针对放大后的小数字优化
+    # thresh_adaptive = cv2.adaptiveThreshold(
+    #     contrast_enhanced,
+    #     maxValue=255,
+    #     adaptiveMethod=cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+    #     thresholdType=cv2.THRESH_BINARY_INV,
+    #     blockSize=11,  # 奇数，数字越小值越小，比原13更适配小尺寸
+    #     C=2  # 越大过滤噪点越多，原1的去噪力度不足
+    # )
+
+    # 黑白二值化
+    _, white_mask = cv2.threshold(
         contrast_enhanced,
-        maxValue=255,
-        adaptiveMethod=cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-        thresholdType=cv2.THRESH_BINARY,
-        blockSize=13,  # 奇数，根据你的数字尺寸调整，数字越小值越小
-        C=1  # 常数，微调阈值，过滤噪点
+        thresh=230,  # 阈值（可调整，比如230/245）
+        maxval=255,  # 阈值上限
+        type=cv2.THRESH_BINARY_INV
     )
-    # 备选：OTSU全局自动二值化（背景均匀时用这个更简单）
-    # _, thresh = cv2.threshold(contrast_enhanced, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
-    # 把当前黑底白字 转为 白底黑字
-    binary_inverted = cv2.bitwise_not(thresh)
+    # # 开运算，去除小噪点
+    open_kernel = np.ones((4, 4), np.uint8)
+    final1 = cv2.morphologyEx(white_mask, cv2.MORPH_OPEN, open_kernel, iterations=1)
+    # # 闭运算，补全缺口
+    close_kernel = np.ones((2, 2), np.uint8)
+    final2 = cv2.morphologyEx(final1, cv2.MORPH_CLOSE, close_kernel, iterations=1)
 
-    # 形态学去噪+边缘优化
-    # 核尺寸用(2,2)，避免把小尺寸数字腐蚀掉，迭代次数按需调整
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 1))
-    # 白底黑字场景，用开运算去除背景噪点，闭运算去除文字内部的小黑点，
-    # 先开运算去背景噪点，再闭运算修复文字缺口
-    final1 = cv2.morphologyEx(binary_inverted, cv2.MORPH_OPEN, kernel, iterations=1)
-    final2 = cv2.morphologyEx(final1, cv2.MORPH_CLOSE, kernel, iterations=1)
-
-    # 可选：锐化增强，让文字边缘更锐利（文字模糊时开启）
-    # sharpen_kernel = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]], dtype=np.float32)
-    # final = cv2.filter2D(final, -1, sharpen_kernel)
 
     # 调试部分，保存每个步骤的处理结果方便调整参数
     global OCR_DEBUG_IMAGE_COUNT
@@ -54,10 +57,9 @@ def preprocess(bgr_frame):
         cv2.imwrite(os.path.join(OCR_DEBUG_SAVE_PATH, f"1_gray_{OCR_DEBUG_IMAGE_COUNT}.png"), gray)
         cv2.imwrite(os.path.join(OCR_DEBUG_SAVE_PATH, f"2_contrast_enhanced_{OCR_DEBUG_IMAGE_COUNT}.png"),
                     contrast_enhanced)
-        cv2.imwrite(os.path.join(OCR_DEBUG_SAVE_PATH, f"3_thresh_{OCR_DEBUG_IMAGE_COUNT}.png"), thresh)
-        cv2.imwrite(os.path.join(OCR_DEBUG_SAVE_PATH, f"4_inverted_{OCR_DEBUG_IMAGE_COUNT}.png"), binary_inverted)
-        cv2.imwrite(os.path.join(OCR_DEBUG_SAVE_PATH, f"5_final1_{OCR_DEBUG_IMAGE_COUNT}.png"), final1)
-        cv2.imwrite(os.path.join(OCR_DEBUG_SAVE_PATH, f"6_final2_{OCR_DEBUG_IMAGE_COUNT}.png"), final2)
+        cv2.imwrite(os.path.join(OCR_DEBUG_SAVE_PATH, f"3_thresh_{OCR_DEBUG_IMAGE_COUNT}.png"), white_mask)
+        cv2.imwrite(os.path.join(OCR_DEBUG_SAVE_PATH, f"4_final1_{OCR_DEBUG_IMAGE_COUNT}.png"), final1)
+        cv2.imwrite(os.path.join(OCR_DEBUG_SAVE_PATH, f"5_final2_{OCR_DEBUG_IMAGE_COUNT}.png"), final2)
         OCR_DEBUG_IMAGE_COUNT += 1
 
 
