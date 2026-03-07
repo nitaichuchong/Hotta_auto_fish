@@ -8,7 +8,6 @@ from config import YELLOW_LOW, YELLOW_HIGH, FISH_GAME_REGION, WHITE_BLOCK_AREA_M
 
 def capture_and_convert(region=FISH_GAME_REGION):
     """为减少重复代码提取的共同方法，截图并返回所需要的格式
-
     :param region: 从 config 中读取的截图区域，[x, y, w, h]
     :returns:
         bgr_frame: 经过 np 处理后的 BGR 格式截图

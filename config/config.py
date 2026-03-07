@@ -20,7 +20,7 @@ PROJECT_PATH = get_project_path()
 # 钓鱼游戏体力条的区域范围，比纯体力条范围大点作为容错
 FISH_GAME_REGION = (650, 60, 750, 40)
 # 钓鱼游戏中鱼的耐力值的区域范围，依旧大一点作容错
-FISH_ENDURANCE_REGION = (630, 110, 50, 30)
+FISH_ENDURANCE_REGION = (640, 115, 50, 20)
 
 # 所需的黄色像素HSV值上下范围
 YELLOW_LOW = (18, 183, 235)
@@ -32,13 +32,13 @@ WHITE_BLOCK_AREA_MAX = 100
 WHITE_BLOCK_SOLIDITY = 0.5
 
 # 执行钓鱼控制的 x 偏移阈值
-OFFSET_THRESHOLD = 5
+OFFSET_THRESHOLD = 10
 
 # 钓鱼游戏的体力条范围
 point1 = (670, 70)
 point2 = (1250, 90)
 # 钓鱼游戏的耐力值范围
-fish_point1 = (640, 110)
+fish_point1 = (640, 115)
 fish_point2 = (690, 130)
 
 # 打包输出目录
@@ -62,3 +62,9 @@ DET_MODEL_NAME = "PP-OCRv5_mobile_det"
 TESSERACT_PATH = os.path.join(PROJECT_PATH, "models", "tesseract")
 # Tesseract 语言包路径
 TESSDATA_PREFIX = os.path.join(TESSERACT_PATH, "tessdata")
+
+# OCR调试开关，默认开启
+OCR_DEBUG = True  # 开启后可保存预处理后的图像，便于调试
+OCR_DEBUG_SAVE_PATH = os.path.join(PROJECT_PATH, "ocr_debug")
+if OCR_DEBUG and not os.path.exists(OCR_DEBUG_SAVE_PATH):
+    os.makedirs(OCR_DEBUG_SAVE_PATH)

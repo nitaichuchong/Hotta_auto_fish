@@ -41,7 +41,11 @@ def paddle_ocr_predict(ocr, preprocessed_frame):
     # 不为空时才能取出结果
     text_list = result[0]['rec_texts']
 
+    # 增加列表长度校验，避免索引越界
+    if len(text_list) == 0:
+        return None
+
     # PaddleOCR 必须再取出 [0] 得到 str 格式， 再通过 strip() 去除开头结尾的空白字符串
-    text = result[0].strip()
+    text = text_list[0].strip()
 
     return text

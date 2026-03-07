@@ -29,13 +29,15 @@ def compile_ui():
     ui_file_list = get_all_files(UI_DIR)
     print(f"UI_DIR: {UI_DIR}")
     print(f"ui_file_list: {ui_file_list}")
+
     for ui_file in ui_file_list:
         print(f"before_ui_file: {ui_file}")
-        ui_file = ui_file.with_suffix(".py")
-        print(f"after_ui_file: {ui_file}")
+        output_file = OUTPUT_DIR / Path(ui_file.stem).with_suffix(".py")
+        print(f"after_output_file: {output_file}")
+
         try:
             subprocess.run(
-                ["pyside6-uic", ui_file, "-o", OUTPUT_DIR], )
+                ["pyside6-uic", str(ui_file), "-o", str(output_file)], )
         except Exception as e:
             print(f"error: {type(e).__name__}: {e}")
 
@@ -46,12 +48,15 @@ def compile_qrc():
     qrc_file_list = get_all_files(QRC_DIR)
     print(f"QRC_DIR: {QRC_DIR}")
     print(f"qrc_file_list: {qrc_file_list}")
+
     for qrc_file in qrc_file_list:
-        qrc_file = qrc_file.with_suffix(".py")
-        print(f"qrc_file: {qrc_file}")
+        print(f"before_qrc_file: {qrc_file}")
+        output_file = OUTPUT_DIR / Path(qrc_file.stem).with_suffix(".py")
+        print(f"after_output_file: {output_file}")
+
         try:
             subprocess.run(
-                ["pyside6-rcc", qrc_file, "-o", OUTPUT_DIR], )
+                ["pyside6-rcc", str(qrc_file), "-o", str(output_file)], )
         except Exception as e:
             print(f"error: {type(e).__name__}: {e}")
 

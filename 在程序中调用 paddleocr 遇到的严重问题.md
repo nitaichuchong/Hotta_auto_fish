@@ -4,20 +4,20 @@
 
 ```python
  # 第一段：位于 main_ui -> toggle_button -> elif self.status == StatusEnum.START 下
- 
- if self.ocr is None:
-     print("ocr 实例已被释放，需再次初始化")
-     try:
-         self.ocr = ocr_init()
-         print("OCR实例重新初始化成功")
-     except Exception as e:
-         self.status_label.config(text=f"OCR初始化失败：{e}")
-         print(f"OCR初始化失败：{e}")
-         return
- 
- # 第二段：位于 main_ui -> stop_all_threads 末尾处
- 
-self.ocr = None
+
+if self.ocr_instance is None:
+    print("ocr 实例已被释放，需再次初始化")
+    try:
+        self.ocr_instance = ocr_init()
+        print("OCR实例重新初始化成功")
+    except Exception as e:
+        self.status_label.config(text=f"OCR初始化失败：{e}")
+        print(f"OCR初始化失败：{e}")
+        return
+
+# 第二段：位于 main_ui -> stop_all_threads 末尾处
+
+self.ocr_instance = None
 logging.info("所有线程已停止，OCR实例已释放")
 ```
 

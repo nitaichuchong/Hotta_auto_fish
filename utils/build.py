@@ -40,18 +40,38 @@ def build_exe():
     params = [
         get_main_py_path(),  # 你的主程序入口
         "-D",  # 单目录打包
-        "-w",  # 无控制台（GUI程序）
+        "-w",  # 无控制台（GUI 程序）
         "--name", "幻塔自动钓鱼",  # 自定义程序名称
 
+        # 添加模型文件
         "--add-data", model_path,
 
+        # PaddleX 相关依赖
         "--collect-data", "paddlex",
         "--collect-binaries", "paddle",
+
+        # PySide6 相关资源（迁移到 Qt 后需要添加）
+        "--collect-data", "PySide6",
+        "--collect-data", "shiboken6",
+
+        # 官方回答：PyInstaller 无法分析二进制扩展中的导入
+        # 因此如果一个模块仅在二进制扩展中导入,我们将无法收集它。
+        # 因此,这些模块需要手动指定为隐性导入。
+        # 解决 chardet 的 mypyc 编译问题（官方建议）
+        # chardet 使用了 lagom 框架和 mypyc 编译，需要手动指定
+        # 注意：模块名可能因版本不同而变化，如果报错请替换为实际的模块名
+        "--hidden-import", "0deeb2fec52624e647be__mypyc",
+        "--collect-submodules", "lagom",
+
+        # 可选：如果使用了 Qt 插件，添加以下参数
+        # "--collect-submodules", "PySide6.QtSvg",
+        # "--collect-submodules", "PySide6.QtSvgWidgets",
 
         # 自定义输出路径核心参数
         "--distpath", DIST_PATH,  # 最终可执行文件输出路径
         "--workpath", WORK_PATH,  # 临时编译文件路径
-        "--specpath", SPEC_PATH,  # spec文件生成路径
+        "--specpath", SPEC_PATH,  # spec 文件生成路径
+
     ]
 
     user_deps = [dist.metadata["Name"] for dist in importlib.metadata.distributions()]
