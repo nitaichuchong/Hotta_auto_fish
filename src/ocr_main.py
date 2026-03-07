@@ -10,7 +10,7 @@ from config import FISH_ENDURANCE_REGION, OCR_TYPE, OCR_DEBUG, OCR_DEBUG_SAVE_PA
 from src.detect_logic import capture_and_convert
 
 # 调试时用
-OCR_DEBUG_IMAGE_COUNT = 0
+# OCR_DEBUG_IMAGE_COUNT = 0
 
 
 def ocr_init():
@@ -60,16 +60,16 @@ def preprocess_frame(bgr_frame):
     final2 = cv2.morphologyEx(final1, cv2.MORPH_CLOSE, close_kernel, iterations=1)
 
     # 调试部分，保存每个步骤的处理结果方便调整参数
-    global OCR_DEBUG_IMAGE_COUNT
-    if OCR_DEBUG:
-        cv2.imwrite(os.path.join(OCR_DEBUG_SAVE_PATH, f"0_bgr_{OCR_DEBUG_IMAGE_COUNT}.png"), bgr_frame)
-        cv2.imwrite(os.path.join(OCR_DEBUG_SAVE_PATH, f"1_gray_{OCR_DEBUG_IMAGE_COUNT}.png"), gray)
-        cv2.imwrite(os.path.join(OCR_DEBUG_SAVE_PATH, f"2_contrast_enhanced_{OCR_DEBUG_IMAGE_COUNT}.png"),
-                    contrast_enhanced)
-        cv2.imwrite(os.path.join(OCR_DEBUG_SAVE_PATH, f"3_thresh_{OCR_DEBUG_IMAGE_COUNT}.png"), white_mask)
-        cv2.imwrite(os.path.join(OCR_DEBUG_SAVE_PATH, f"4_final1_{OCR_DEBUG_IMAGE_COUNT}.png"), final1)
-        cv2.imwrite(os.path.join(OCR_DEBUG_SAVE_PATH, f"5_final2_{OCR_DEBUG_IMAGE_COUNT}.png"), final2)
-        OCR_DEBUG_IMAGE_COUNT += 1
+    # global OCR_DEBUG_IMAGE_COUNT
+    # if OCR_DEBUG:
+    #     cv2.imwrite(os.path.join(OCR_DEBUG_SAVE_PATH, f"0_bgr_{OCR_DEBUG_IMAGE_COUNT}.png"), bgr_frame)
+    #     cv2.imwrite(os.path.join(OCR_DEBUG_SAVE_PATH, f"1_gray_{OCR_DEBUG_IMAGE_COUNT}.png"), gray)
+    #     cv2.imwrite(os.path.join(OCR_DEBUG_SAVE_PATH, f"2_contrast_enhanced_{OCR_DEBUG_IMAGE_COUNT}.png"),
+    #                 contrast_enhanced)
+    #     cv2.imwrite(os.path.join(OCR_DEBUG_SAVE_PATH, f"3_thresh_{OCR_DEBUG_IMAGE_COUNT}.png"), white_mask)
+    #     cv2.imwrite(os.path.join(OCR_DEBUG_SAVE_PATH, f"4_final1_{OCR_DEBUG_IMAGE_COUNT}.png"), final1)
+    #     cv2.imwrite(os.path.join(OCR_DEBUG_SAVE_PATH, f"5_final2_{OCR_DEBUG_IMAGE_COUNT}.png"), final2)
+    #     OCR_DEBUG_IMAGE_COUNT += 1
 
     return final2
 

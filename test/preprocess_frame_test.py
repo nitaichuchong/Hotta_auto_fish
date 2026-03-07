@@ -49,7 +49,6 @@ def preprocess(bgr_frame):
     close_kernel = np.ones((2, 2), np.uint8)
     final2 = cv2.morphologyEx(final1, cv2.MORPH_CLOSE, close_kernel, iterations=1)
 
-
     # 调试部分，保存每个步骤的处理结果方便调整参数
     global OCR_DEBUG_IMAGE_COUNT
     if OCR_DEBUG:
