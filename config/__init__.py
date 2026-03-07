@@ -39,7 +39,7 @@ __all__ = [
     # 调试配置
     "OCR_DEBUG",
     "OCR_DEBUG_SAVE_PATH",
-    
+
     # 项目路径配置
     "PROJECT_PATH",
     "DIST_PATH",

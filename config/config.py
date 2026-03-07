@@ -66,5 +66,12 @@ TESSDATA_PREFIX = os.path.join(TESSERACT_PATH, "tessdata")
 # OCR调试开关，默认开启
 OCR_DEBUG = True  # 开启后可保存预处理后的图像，便于调试
 OCR_DEBUG_SAVE_PATH = os.path.join(PROJECT_PATH, "ocr_debug")
+# 若不存在调试目录则创建
 if OCR_DEBUG and not os.path.exists(OCR_DEBUG_SAVE_PATH):
     os.makedirs(OCR_DEBUG_SAVE_PATH)
+# 清理调试目录，但不删除文件夹自身
+if OCR_DEBUG and os.path.exists(OCR_DEBUG_SAVE_PATH):
+    for filename in os.listdir(OCR_DEBUG_SAVE_PATH):
+        file_path = os.path.join(OCR_DEBUG_SAVE_PATH, filename)
+        if os.path.isfile(file_path):
+            os.remove(file_path)
