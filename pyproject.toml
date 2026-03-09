@@ -1,0 +1,17 @@
+[project]
+name = "hottaautofish"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.13"
+dependencies = [
+    "mss>=10.1.0",
+    "opencv-python>=4.13.0.92",
+    "paddleocr>=3.4.0",
+    "paddlepaddle==3.0.0",
+    "pillow>=12.1.1",
+    "pyautogui>=0.9.54",
+    "pyinstaller>=6.19.0",
+    "pynput>=1.8.1",
+    "pyside6>=6.10.2",
+    "pywin32>=311",
+]
