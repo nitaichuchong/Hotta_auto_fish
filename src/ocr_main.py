@@ -1,4 +1,3 @@
-import os
 import traceback
 
 import cv2
@@ -6,8 +5,8 @@ import numpy as np
 
 from src.utils.ocr_paddle_ import paddle_ocr_predict, paddle_ocr_init
 from src.utils.ocr_tesseract import tesseract_ocr_recognition
-from config import FISH_ENDURANCE_REGION, OCR_TYPE, OCR_DEBUG, OCR_DEBUG_SAVE_PATH
-from src.detect_logic import capture_and_convert
+from config import FISH_ENDURANCE_REGION, OCR_TYPE
+from src.utils.detect_logic import capture_and_convert
 
 # 调试时用
 # OCR_DEBUG_IMAGE_COUNT = 0

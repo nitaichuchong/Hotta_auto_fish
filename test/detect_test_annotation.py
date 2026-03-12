@@ -1,7 +1,7 @@
 import cv2
 import time
 
-from src.detect_logic import get_yellow_area_range, get_white_block_pos, capture_and_convert
+from src.utils.detect_logic import get_yellow_area_range, get_white_block_pos, capture_and_convert
 
 
 class DetectionRunner:

@@ -7,7 +7,7 @@ from PySide6.QtWidgets import QMainWindow, QApplication
 
 from UI.main_window import Ui_MainWindow
 from config import OCR_TYPE
-from src.utils.window_manager import activate_game_window, set_window_topmost
+from src.utils.window_capture import activate_game_window, set_window_topmost
 from src.ocr_main import ocr_init
 from src.sub_threads import FishThread, OCRThread
 

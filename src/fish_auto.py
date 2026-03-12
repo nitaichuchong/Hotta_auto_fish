@@ -1,5 +1,5 @@
 from config import OFFSET_THRESHOLD
-from src.detect_logic import get_yellow_area_range, get_white_block_pos
+from src.utils.detect_logic import get_yellow_area_range, get_white_block_pos
 
 
 # 主函数

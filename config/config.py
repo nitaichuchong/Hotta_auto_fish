@@ -63,8 +63,8 @@ TESSERACT_PATH = os.path.join(PROJECT_PATH, "models", "tesseract")
 # Tesseract 语言包路径
 TESSDATA_PREFIX = os.path.join(TESSERACT_PATH, "tessdata")
 
-# OCR调试开关，默认开启
-OCR_DEBUG = True  # 开启后可保存预处理后的图像，便于调试
+# OCR调试开关，默认关闭
+OCR_DEBUG = False  # 开启后可保存预处理后的图像，便于调试
 OCR_DEBUG_SAVE_PATH = os.path.join(PROJECT_PATH, "ocr_debug")
 # 若不存在调试目录则创建
 if OCR_DEBUG and not os.path.exists(OCR_DEBUG_SAVE_PATH):
