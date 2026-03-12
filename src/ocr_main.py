@@ -84,25 +84,25 @@ def check_ocr_result(result):
     """
     # 检查是否为空值
     if not result or len(result) == 0:
-        print(f"{OCR_TYPE} ocr :在第一步校验返回 None")
+        # print(f"{OCR_TYPE} ocr :在第一步校验返回 None")
         return None
 
     # 检查是否含有分隔符
     if '/' not in result:
-        print(f"{OCR_TYPE} ocr :在第二步校验返回 None")
+        # print(f"{OCR_TYPE} ocr :在第二步校验返回 None")
         return None
 
     # 检查是否符合格式
     parts = result.split('/')
     if len(parts) != 2:
-        print(f"{OCR_TYPE} ocr :在第三步校验返回 None")
+        # print(f"{OCR_TYPE} ocr :在第三步校验返回 None")
         return None
 
     # 检查是否有任意一项出错，过滤非数字字符
     current_str = ''.join(filter(str.isdigit, parts[0]))
     total_str = ''.join(filter(str.isdigit, parts[1]))
     if not current_str or not total_str:
-        print(f"{OCR_TYPE} ocr :在第四步校验返回 None")
+        # print(f"{OCR_TYPE} ocr :在第四步校验返回 None")
         return None
 
     current_endurance = int(current_str)
@@ -141,7 +141,7 @@ def ocr_recognition(ocr):
             result = tesseract_ocr_recognition(preprocessed_frame)
 
         # 打印识别结果，便于调试
-        print(f"{OCR_TYPE} ocr :{result}")
+        # print(f"{OCR_TYPE} ocr :{result}")
 
         # 检查并返回识别结果
         return check_ocr_result(result)

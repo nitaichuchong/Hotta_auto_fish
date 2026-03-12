@@ -1,4 +1,5 @@
 import sys
+import time
 from enum import Enum
 
 import pyautogui
@@ -7,10 +8,11 @@ from PySide6.QtWidgets import QMainWindow, QApplication
 
 from UI.main_window import Ui_MainWindow
 from config import OCR_TYPE
-from src.utils.window_manager import set_window_topmost
+from src.utils.window_manager import set_window_topmost, activate_game_window
 from src.ocr_main import ocr_init
 from src.sub_threads import FishThread, OCRThread
 from src.utils.detect_logic import disable_screenshots, enable_screenshots
+from src.utils.input_manager import create_input_manager
 
 
 class StatusEnum(Enum):
@@ -20,22 +22,6 @@ class StatusEnum(Enum):
     INIT = 0
     READY = 1
     RUNNING = 2
-
-
-def _key_up(key):
-    """
-    槽函数，执行按键操作
-    :param key: 需要松开的键
-    """
-    pyautogui.keyUp(key)
-
-
-def _key_down(key):
-    """
-    槽函数，执行按键操作
-    :param key: 需要按下的键
-    """
-    pyautogui.keyDown(key)
 
 
 class MainWindow(QMainWindow):
@@ -56,6 +42,9 @@ class MainWindow(QMainWindow):
 
         # 控制状态的状态机
         self.status = StatusEnum.INIT
+
+        # 输入管理器实例
+        self.input_manager = None
 
         # 初始化绑定
         self._connect_signals()
@@ -117,9 +106,9 @@ class MainWindow(QMainWindow):
             self.fish_thread = FishThread()
             # 绑定子线程的信号到主线程槽函数
             self.fish_thread.update_fishing_status.connect(self._update_fishing_label)
-            # 按键控制
-            self.fish_thread.keyUp.connect(_key_up)
-            self.fish_thread.keyDown.connect(_key_down)
+            # 按键控制 - 使用输入管理器
+            self.fish_thread.keyUp.connect(self._handle_key_up)
+            self.fish_thread.keyDown.connect(self._handle_key_down)
             # 收杆请求绑定
             self.fish_thread.request_reel.connect(self._do_reel_process)
             # 绑定收杆完成信号到 FishThread 的槽函数
@@ -136,6 +125,10 @@ class MainWindow(QMainWindow):
             # 如果在创建线程前就启动截图，可能会出现线程未完全停止但截图已启用的情况，导致资源冲突和异常
             print("启动截图...")
             enable_screenshots()
+
+            # 初始化输入管理器（默认使用后台模式）
+            print("初始化输入管理器（后台模式）...")
+            self.input_manager = create_input_manager()
 
     def _pause_all_threads(self):
         """统一暂停所有线程"""
@@ -210,7 +203,35 @@ class MainWindow(QMainWindow):
             import traceback
             traceback.print_exc()
 
+        # 清理输入管理器
+        try:
+            if self.input_manager:
+                print("正在清理输入管理器...")
+                # 输入管理器不需要特殊清理操作，直接置空即可
+                self.input_manager = None
+                print("输入管理器已清理")
+        except Exception as e:
+            print(f"清理输入管理器失败：{e}")
+            import traceback
+            traceback.print_exc()
+
         print("=== 所有线程停止完成 ===")
+
+    def _handle_key_down(self, key):
+        """
+        处理按键按下信号
+        :param key: 按键名称
+        """
+        if self.input_manager:
+            self.input_manager.key_down(key)
+
+    def _handle_key_up(self, key):
+        """
+        处理按键松开信号
+        :param key: 按键名称
+        """
+        if self.input_manager:
+            self.input_manager.key_up(key)
 
     def _update_endurance_label(self, current, total):
         """
@@ -245,7 +266,14 @@ class MainWindow(QMainWindow):
         self._pause_all_threads()
 
         self.ui.fishing_label.setText("正在收杆中...")
-        pyautogui.press('1')
+
+        # 使用输入管理器发送按键
+        if self.input_manager:
+            self.input_manager.press_key('1')
+        else:
+            print("输入管理器未初始化，使用 pyautogui 发送按键")
+            pyautogui.press('1')
+
         QTimer.singleShot(2000, self._reel_step2)
 
     def _reel_step2(self):
@@ -255,7 +283,14 @@ class MainWindow(QMainWindow):
         if self.status != StatusEnum.RUNNING:
             return
 
-        pyautogui.click()
+        activate_game_window("幻塔  ")
+        time.sleep(0.5)  # 确保窗口激活后再执行点击，避免点击失效
+        # 使用输入管理器发送鼠标点击
+        if self.input_manager:
+            self.input_manager.click_mouse()
+        else:
+            pyautogui.click()
+
         QTimer.singleShot(1000, self._reel_step3)
 
     def _reel_step3(self):
@@ -266,7 +301,13 @@ class MainWindow(QMainWindow):
             return
 
         self.ui.fishing_label.setText("正在准备下一杆...")
-        pyautogui.press('1')
+
+        # 使用输入管理器发送按键
+        if self.input_manager:
+            self.input_manager.press_key('1')
+        else:
+            pyautogui.press('1')
+
         QTimer.singleShot(2000, self._reel_resume)
 
     def _reel_resume(self):
@@ -294,7 +335,7 @@ class MainWindow(QMainWindow):
             print("停止所有线程...")
             self._stop_all_threads()
 
-            print("资源清理完成（MSS 将由 atexit 自动清理）")
+            print("资源清理完成")
 
         except Exception as e:
             print(f"关闭窗口时出错：{e}")

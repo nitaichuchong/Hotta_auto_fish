@@ -12,12 +12,10 @@ class MssCaptureManager:
     """
 
     def __init__(self):
-        print("正在初始化 MssCaptureManager...")
         try:
             # 设置 DPI 感知，确保截图在不同 DPI 设置下正常工作
             try:
                 ctypes.windll.user32.SetProcessDPIAware()
-                print("DPI 感知设置成功")
             except Exception as e:
                 print(f"DPI 感知设置失败：{e}")
             

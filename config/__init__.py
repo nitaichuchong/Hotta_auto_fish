@@ -17,6 +17,7 @@ from .config import DIST_PATH, WORK_PATH, SPEC_PATH
 
 # 特殊配置项
 from .config import DXGI_CAPTURE_DLL_PATH
+from .config import USE_BACKGROUND_MODE
 
 # 统一导出
 __all__ = [
@@ -51,4 +52,5 @@ __all__ = [
 
     # 特殊配置项
     "DXGI_CAPTURE_DLL_PATH",
+    "USE_BACKGROUND_MODE",
 ]

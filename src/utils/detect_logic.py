@@ -7,7 +7,6 @@ from src.utils.dxgi_capture_manager import get_dxgi_manager
 from src.utils.mss_capture_manager import get_mss_manager
 from src.utils.window_manager import is_window_foreground
 
-
 # 全局截图禁用标志
 _screenshot_disabled = False
 
@@ -46,21 +45,25 @@ def capture_and_convert(region=FISH_GAME_REGION):
     try:
         # 若窗口位于前台，需要使用 mss 进行截图，否则游戏会阻止获取画面，属于防作弊机制
         if is_window_foreground("幻塔  "):
-            print("窗口在前台，使用 mss 进行截图")
             # 每次创建新的 MSS 实例，用完即销毁
             mss_capture = get_mss_manager()
             bgr_frame = mss_capture.capture(region)
             # 立即清理资源
             mss_capture.cleanup()
         else:
-        # 后台使用 dxgi，此时防作弊机制不生效，可以正常获取画面
-            print("窗口不在前台，使用 dxgi_capture 进行截图")
+            # 后台使用 dxgi，此时防作弊机制不生效，可以正常获取画面
             # 使用 DXGI 单例管理器
             dxgi_capture = get_dxgi_manager()
+
+            # 检查 DXGI 是否可用
+            if not hasattr(dxgi_capture, 'dxgi_capture') or dxgi_capture.dxgi_capture is None:
+                # print("DXGI 尚未准备好，跳过本次截图")
+                return None, None, None
+
             bgr_frame = dxgi_capture.capture(region)
 
         if bgr_frame is None:
-            print("未成功捕获图像，无法进行后续处理")
+            # print("未成功捕获图像，无法进行后续处理")
             return None, None, None
 
         hsv_frame = cv2.cvtColor(bgr_frame, cv2.COLOR_BGR2HSV)
@@ -68,7 +71,7 @@ def capture_and_convert(region=FISH_GAME_REGION):
         return bgr_frame, hsv_frame, region_x
 
     except Exception as e:
-        print(f"截图失败：{e}")
+        # print(f"截图失败：{e}")
         return None, None, None
 
 

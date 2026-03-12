@@ -78,3 +78,4 @@ if OCR_DEBUG and os.path.exists(OCR_DEBUG_SAVE_PATH):
 
 # dxgi_capture.dll 的路径
 DXGI_CAPTURE_DLL_PATH = os.path.join(PROJECT_PATH, "src", "utils", "dxgi_capture.dll")
+USE_BACKGROUND_MODE = True

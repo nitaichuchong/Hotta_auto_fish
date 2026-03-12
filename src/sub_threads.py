@@ -1,4 +1,4 @@
-from PySide6.QtCore import QThread, Signal, QWaitCondition, QMutex
+from PySide6.QtCore import QThread, Signal, QWaitCondition, QMutex, QTimer
 
 from src.fish_auto import key_to_press
 from src.ocr_main import ocr_recognition
@@ -140,14 +140,16 @@ class FishThread(BaseThread):
             if self.current_endurance == 0 and not self._is_reeling:
                 self._is_reeling = True  # 标记正在收杆
                 # 发送收杆信号执行操作
+                print("耐力值为 0，触发收杆流程")
+                self.msleep(200)
                 self.request_reel.emit()
 
             try:
                 self.target_key = key_to_press()
 
-                # 未识别到时延迟缩短到 50ms，提高响应速度
+                # 未识别到时延迟缩短，提高响应速度
                 if not self.target_key:
-                    self.msleep(50)
+                    self.msleep(100)
                     continue
 
                 # 只有按键状态变化时才执行操作（避免重复按键或松开）
@@ -164,9 +166,9 @@ class FishThread(BaseThread):
 
                     # 若偏移值小到无需控制，则短暂休眠
                     if self.target_key is None:
-                        self.msleep(50)  # 缩短到 50ms
+                        self.msleep(100)
             except Exception as e:
-                self.msleep(50)  # 缩短到 50ms
+                self.msleep(100)
 
         # 退出循环时确保按键已松开
         if self.current_key is not None:
