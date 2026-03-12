@@ -45,4 +45,7 @@ def get_window_class_by_title(window_title):
 
 if __name__ == '__main__':
     print_all_windows()
-    get_window_class_by_title("幻塔")
+    # 实际运行游戏后标题后有两个空格，或一个制表符，请根据实际情况调整
+    # 请务必注意这一点，一定要在 print_all_windows() 后鼠标复制全名，而不仅仅是可见的标题部分
+    # 否则可能会因为空格或制表符导致找不到窗口，或找到错误的窗口
+    get_window_class_by_title("幻塔  ")

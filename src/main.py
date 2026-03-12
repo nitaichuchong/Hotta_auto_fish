@@ -7,9 +7,10 @@ from PySide6.QtWidgets import QMainWindow, QApplication
 
 from UI.main_window import Ui_MainWindow
 from config import OCR_TYPE
-from src.utils.window_capture import activate_game_window, set_window_topmost
+from src.utils.window_manager import set_window_topmost
 from src.ocr_main import ocr_init
 from src.sub_threads import FishThread, OCRThread
+from src.utils.detect_logic import disable_screenshots, enable_screenshots
 
 
 class StatusEnum(Enum):
@@ -81,8 +82,6 @@ class MainWindow(QMainWindow):
 
         # 初始化完成后，启动控制钓鱼和耐力值识别的线程
         elif self.status == StatusEnum.READY:
-            # 激活游戏窗口
-            activate_game_window("幻塔")
 
             # 启动线程
             self._start_all_threads()
@@ -133,6 +132,11 @@ class MainWindow(QMainWindow):
             self.ocr_thread.start()
             self.fish_thread.start()
 
+            # 默认情况下是 False，OCR 线程创建完成后需启动截图
+            # 如果在创建线程前就启动截图，可能会出现线程未完全停止但截图已启用的情况，导致资源冲突和异常
+            print("启动截图...")
+            enable_screenshots()
+
     def _pause_all_threads(self):
         """统一暂停所有线程"""
         if self.fish_thread:
@@ -152,31 +156,61 @@ class MainWindow(QMainWindow):
         统一停止所有线程，确保所有线程完全退出，
         若未完全退出就再次执行，可能创建多个线程
         """
-        # 先停止 OCR 线程，因为它不依赖其他线程
-        if self.ocr_thread:
-            self.ocr_thread.stop()
-            # 等待确保完全退出
-            self.ocr_thread.wait(2000)
-            self.ocr_thread.deleteLater()
-            self.ocr_thread = None
+        print("=== 开始停止所有线程 ===")
 
-        # 再停止钓鱼线程
-        if self.fish_thread:
-            self.fish_thread.stop()
-            # 等待确保完全退出
-            self.fish_thread.wait(2000)
-            self.fish_thread.deleteLater()
-            self.fish_thread = None
+        # 首先禁用截图，防止新的截图请求
+        print("禁用截图...")
+        disable_screenshots()
 
-        # 关键：PaddleOCR 需要重新初始化，避免底层资源冲突
-        # 如果是 PaddleOCR，在停止后销毁实例（PaddleOCR 内部线程池需要完全释放）
-        if self.ocr_instance and OCR_TYPE == "paddle":
-            try:
+        try:
+            # 先停止 OCR 线程，因为它不依赖其他线程
+            if self.ocr_thread:
+                print("正在停止 OCR 线程...")
+                self.ocr_thread.stop()
+                # 等待确保完全退出
+                print("等待 OCR 线程退出...")
+                self.ocr_thread.wait(2000)
+                print("OCR 线程已停止，准备删除...")
+                self.ocr_thread.deleteLater()
+                self.ocr_thread = None
+                print("OCR 线程已清理完毕")
+        except Exception as e:
+            print(f"停止 OCR 线程时出错：{e}")
+            import traceback
+            traceback.print_exc()
+
+        try:
+            # 再停止钓鱼线程
+            if self.fish_thread:
+                print("正在停止钓鱼线程...")
+                self.fish_thread.stop()
+                # 等待确保完全退出
+                print("等待钓鱼线程退出...")
+                self.fish_thread.wait(2000)
+                print("钓鱼线程已停止，准备删除...")
+                self.fish_thread.deleteLater()
+                self.fish_thread = None
+                print("钓鱼线程已清理完毕")
+        except Exception as e:
+            print(f"停止钓鱼线程时出错：{e}")
+            import traceback
+            traceback.print_exc()
+
+        try:
+            # 关键：PaddleOCR 需要重新初始化，避免底层资源冲突
+            # 如果是 PaddleOCR，在停止后销毁实例（PaddleOCR 内部线程池需要完全释放）
+            if self.ocr_instance and OCR_TYPE == "paddle":
+                print("正在销毁 PaddleOCR 实例...")
                 # PaddleOCR 没有显式的 destroy 方法，通过置空帮助 GC 回收
                 del self.ocr_instance
                 self.ocr_instance = None
-            except Exception as e:
-                print(f"Error destroying PaddleOCR instance: {e}")
+                print("PaddleOCR 实例已销毁")
+        except Exception as e:
+            print(f"Error destroying PaddleOCR instance: {e}")
+            import traceback
+            traceback.print_exc()
+
+        print("=== 所有线程停止完成 ===")
 
     def _update_endurance_label(self, current, total):
         """
@@ -253,7 +287,21 @@ class MainWindow(QMainWindow):
 
     def _on_close(self, event):
         """窗口关闭事件"""
-        self._stop_all_threads()
+        print("=== 开始关闭窗口 ===")
+
+        try:
+            # 先停止所有线程
+            print("停止所有线程...")
+            self._stop_all_threads()
+
+            print("资源清理完成（MSS 将由 atexit 自动清理）")
+
+        except Exception as e:
+            print(f"关闭窗口时出错：{e}")
+            import traceback
+            traceback.print_exc()
+
+        print("=== 准备关闭窗口 ===")
         event.accept()
 
 

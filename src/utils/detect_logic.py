@@ -1,9 +1,27 @@
 import cv2
 import numpy as np
-import mss
 
 from config import YELLOW_LOW, YELLOW_HIGH, FISH_GAME_REGION, WHITE_BLOCK_AREA_MIN, WHITE_BLOCK_AREA_MAX, \
     WHITE_BLOCK_SOLIDITY
+from src.utils.dxgi_capture_manager import get_dxgi_manager
+from src.utils.mss_capture_manager import get_mss_manager
+from src.utils.window_manager import is_window_foreground
+
+
+# 全局截图禁用标志
+_screenshot_disabled = False
+
+
+def disable_screenshots():
+    """禁用所有截图操作（在线程停止时调用）"""
+    global _screenshot_disabled
+    _screenshot_disabled = True
+
+
+def enable_screenshots():
+    """启用截图操作"""
+    global _screenshot_disabled
+    _screenshot_disabled = False
 
 
 def capture_and_convert(region=FISH_GAME_REGION):
@@ -12,31 +30,42 @@ def capture_and_convert(region=FISH_GAME_REGION):
     :returns:
         bgr_frame: 经过 np 处理后的 BGR 格式截图
         hsv_frame: 经过 np 处理后的 HSV 格式截图
-        region_x: 截图区域的左边界在屏幕上的位置x，相对坐标下x=0
+        region_x: 截图区域的左边界在屏幕上的位置 x，相对坐标下 x=0
     """
     # 新增参数校验
     if not isinstance(region, (tuple, list)) or len(region) != 4:
-        raise ValueError("region参数必须是(x, y, width, height)格式的元组/列表")
+        raise ValueError("region 参数必须是 (x, y, width, height) 格式的元组/列表")
     if any(v < 0 for v in region):
-        raise ValueError("region参数的数值不能为负数")
+        raise ValueError("region 参数的数值不能为负数")
+
+    # 检查是否已禁用截图
+    if _screenshot_disabled:
+        print("截图已禁用，跳过")
+        return None, None, None
 
     try:
-        with mss.mss() as sct:
-            # 构造 mss 识别的 monitor 格式（top=y, left=x, width/height 不变）
-            monitor = {
-                "top": region[1],
-                "left": region[0],
-                "width": region[2],
-                "height": region[3]
-            }
-            # 截图直接返回 numpy 数组，默认为 BGRA 格式，A 即 Alpha
-            img = np.array(sct.grab(monitor))
-            # 去掉 Alpha 通道（游戏截图无透明层），得到 BGR 格式
-            bgr_frame = img[:, :, :3]
-            # 直接转换为 HSV 格式
-            hsv_frame = cv2.cvtColor(bgr_frame, cv2.COLOR_BGR2HSV)
-            region_x = region[0]
-            return bgr_frame, hsv_frame, region_x
+        # 若窗口位于前台，需要使用 mss 进行截图，否则游戏会阻止获取画面，属于防作弊机制
+        if is_window_foreground("幻塔  "):
+            print("窗口在前台，使用 mss 进行截图")
+            # 每次创建新的 MSS 实例，用完即销毁
+            mss_capture = get_mss_manager()
+            bgr_frame = mss_capture.capture(region)
+            # 立即清理资源
+            mss_capture.cleanup()
+        else:
+        # 后台使用 dxgi，此时防作弊机制不生效，可以正常获取画面
+            print("窗口不在前台，使用 dxgi_capture 进行截图")
+            # 使用 DXGI 单例管理器
+            dxgi_capture = get_dxgi_manager()
+            bgr_frame = dxgi_capture.capture(region)
+
+        if bgr_frame is None:
+            print("未成功捕获图像，无法进行后续处理")
+            return None, None, None
+
+        hsv_frame = cv2.cvtColor(bgr_frame, cv2.COLOR_BGR2HSV)
+        region_x = region[0]
+        return bgr_frame, hsv_frame, region_x
 
     except Exception as e:
         print(f"截图失败：{e}")

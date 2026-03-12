@@ -13,5 +13,6 @@ dependencies = [
     "pyinstaller>=6.19.0",
     "pynput>=1.8.1",
     "pyside6>=6.10.2",
+    "pytesseract>=0.3.13",
     "pywin32>=311",
 ]

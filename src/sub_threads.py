@@ -61,7 +61,7 @@ class OCRThread(BaseThread):
             while self._is_paused and not self._is_stop:
                 self._mutex.lock()
                 while self._is_paused and not self._is_stop:
-                    self._pause_cond.wait(self._mutex)  # 线程休眠，直到被resume唤醒
+                    self._pause_cond.wait(self._mutex)  # 线程休眠，直到被 resume 唤醒
                 self._mutex.unlock()
 
             if self._is_stop:
@@ -70,21 +70,25 @@ class OCRThread(BaseThread):
             # 进行异常捕获，并向主线程发送信号传递识别结果
             try:
                 ocr_result = ocr_recognition(self.ocr)
+
                 if ocr_result:
                     current, total = ocr_result
                     self.update_endurance.emit(current, total)
                     self.send_current_endurance.emit(current)
                 else:
                     # 未识别到时短暂延迟，但不要等太久
-                    self.msleep(200)
+                    self.msleep(500)
                     continue
             except Exception as e:
                 error_msg = f"OCR recognition error: {e}"
                 self.ocr_error.emit(error_msg)
-                self.msleep(100)  # 异常时缩短延迟
+                self.msleep(1000)  # 异常时延迟
 
             # 检测间隔
             self.msleep(500)
+
+        # 新增：线程退出前打印日志
+        print("OCRThread 已退出 run() 方法")
 
 
 class FishThread(BaseThread):
@@ -140,7 +144,7 @@ class FishThread(BaseThread):
 
             try:
                 self.target_key = key_to_press()
-                
+
                 # 未识别到时延迟缩短到 50ms，提高响应速度
                 if not self.target_key:
                     self.msleep(50)

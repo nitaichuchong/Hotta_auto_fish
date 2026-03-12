@@ -15,6 +15,9 @@ from .config import OCR_DEBUG, OCR_DEBUG_SAVE_PATH
 from .config import PROJECT_PATH
 from .config import DIST_PATH, WORK_PATH, SPEC_PATH
 
+# 特殊配置项
+from .config import DXGI_CAPTURE_DLL_PATH
+
 # 统一导出
 __all__ = [
     # 游戏区域配置
@@ -45,4 +48,7 @@ __all__ = [
     "DIST_PATH",
     "WORK_PATH",
     "SPEC_PATH",
+
+    # 特殊配置项
+    "DXGI_CAPTURE_DLL_PATH",
 ]

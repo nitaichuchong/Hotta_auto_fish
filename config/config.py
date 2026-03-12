@@ -75,3 +75,6 @@ if OCR_DEBUG and os.path.exists(OCR_DEBUG_SAVE_PATH):
         file_path = os.path.join(OCR_DEBUG_SAVE_PATH, filename)
         if os.path.isfile(file_path):
             os.remove(file_path)
+
+# dxgi_capture.dll 的路径
+DXGI_CAPTURE_DLL_PATH = os.path.join(PROJECT_PATH, "src", "utils", "dxgi_capture.dll")
