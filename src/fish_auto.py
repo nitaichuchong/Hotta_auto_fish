@@ -1,13 +1,21 @@
+"""钓鱼自动控制模块
+
+提供钓鱼自动化控制功能，包括按键检测和偏移计算。
+"""
+from typing import Optional
+
 from config import OFFSET_THRESHOLD
 from src.utils.detect_logic import get_yellow_area_range, get_white_block_pos
 
 
-# 主函数
-def key_to_press():
-    """
-    获取当前需要按下的按键
-    :return: press_key : 当前需要按下的按键
-    ""（空字符串）: 未识别到结果
+def key_to_press() -> str:
+    """获取当前需要按下的按键
+    
+    根据黄色区域中心点与玩家位置的偏移，决定需要按下的方向键。
+    
+    Returns:
+        str: 需要按下的按键（'a'、'd' 或空字符串）。
+             空字符串表示未识别到结果，无需按键。
     """
     # 获取 x 坐标偏移值
     offset_x = calculate_the_offset_x()
@@ -21,16 +29,18 @@ def key_to_press():
     elif offset_x < -OFFSET_THRESHOLD:
         press_key = "d"  # 偏左，按 D 右移
     else:
-        press_key = None  # 偏移小到无需处理
+        press_key = ""  # 偏移小到无需处理
 
     return press_key
 
 
-def calculate_the_offset_x():
-    """
-    获取黄色区域的两侧边界，并计算其中心点，
-    再以玩家位置减去中心点得到 x 坐标偏移值
-    :return: x 坐标偏移值
+def calculate_the_offset_x() -> Optional[int]:
+    """计算黄色区域中心点与玩家位置的 X 坐标偏移值
+    
+    获取黄色区域的两侧边界，计算其中心点，再用玩家位置减去中心点得到偏移值。
+    
+    Returns:
+        Optional[int]: X 坐标偏移值。如果未检测到黄色区域或玩家位置，返回 None。
     """
     bar_area = get_yellow_area_range()
     player_pos = get_white_block_pos()

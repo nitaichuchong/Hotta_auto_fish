@@ -1,15 +1,22 @@
+"""窗口管理模块
+
+提供窗口操作功能，包括置顶、激活和状态检查。
+"""
+from typing import Union
+
 import pygetwindow
 import win32con
 import win32gui
 
 
-def set_window_topmost(hwnd, is_topmost=True):
-    """
-    使用 Windows API 设置窗口置顶，类似 tk 的 -topmost 效果
-    这种置顶方式不会阻止其他窗口被激活，是"软置顶"
+def set_window_topmost(hwnd: Union[int, object], is_topmost: bool = True) -> None:
+    """使用 Windows API 设置窗口置顶
     
-    :param hwnd: int 或 PySide6 窗口对象 : Windows 窗口句柄或 Qt 窗口对象
-    :param is_topmost: bool : 是否置顶，True 为置顶，False 为取消置顶
+    使用软置顶方式，不会阻止其他窗口被激活。
+    
+    Args:
+        hwnd (Union[int, object]): Windows 窗口句柄或 PySide6 窗口对象。
+        is_topmost (bool): 是否置顶，True 为置顶，False 为取消置顶。
     """
     # 如果是 Qt 窗口对象，转换为 HWND
     if hasattr(hwnd, 'winId'):
@@ -25,10 +32,13 @@ def set_window_topmost(hwnd, is_topmost=True):
                              win32con.SWP_NOMOVE | win32con.SWP_NOSIZE)
 
 
-def activate_game_window(game):
-    """
-    激活游戏窗口，确保操作在游戏窗口上执行
-    :param game: str : 需要激活的游戏窗口名
+def activate_game_window(game: str) -> None:
+    """激活游戏窗口
+    
+    确保操作在游戏窗口上执行。
+    
+    Args:
+        game (str): 需要激活的游戏窗口名称。
     """
     # 激活游戏窗口
     try:
@@ -40,11 +50,14 @@ def activate_game_window(game):
         print(f"激活游戏窗口失败：{e}")
 
 
-def is_window_foreground(window_title="幻塔  "):
-    """
-    检查指定窗口是否在前台
-    :param window_title: str : 需要检查的窗口标题
-    :return: bool : True 如果窗口在前台，False 否则
+def is_window_foreground(window_title: str = "幻塔  ") -> bool:
+    """检查指定窗口是否在前台
+    
+    Args:
+        window_title (str): 需要检查的窗口标题。
+        
+    Returns:
+        bool: True 如果窗口在前台，False 否则。
     """
     try:
         foreground_window = win32gui.GetForegroundWindow()

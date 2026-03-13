@@ -37,7 +37,7 @@
      <rect>
       <x>0</x>
       <y>0</y>
-      <width>351</width>
+      <width>352</width>
       <height>381</height>
      </rect>
     </property>
@@ -164,7 +164,7 @@
        <item>
         <widget class="QLabel" name="tips_label">
          <property name="text">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:8pt; font-weight:700; color:#00aa00;&quot;&gt;请不要让该程序窗口遮挡住鱼的耐力值和中间的体力条&lt;/span&gt;&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:8pt; font-weight:700; color:#00aa00;&quot;&gt;使用时先点击初始化，然后每次开始执行的第一次挥杆需要自己操作&lt;/span&gt;&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:8pt; font-weight:700; color:#00aa00;&quot;&gt;第一次挥杆后开始执行，后面就是全自动循环钓鱼，你也可以随时停止&lt;/span&gt;&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:8pt; font-weight:700; color:#00aa00;&quot;&gt;但每次停止后的第一次挥杆，依旧需要自己操作&lt;/span&gt;&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:8pt; font-weight:700; color:#00aa00;&quot;&gt;执行的过程中鼠标和键盘请勿操作，除非你是想停止或重新执行&lt;/span&gt;&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:8pt; font-weight:700; color:#00aa00;&quot;&gt;目前是调用键鼠进行操作，所以你会跟该程序操作冲突&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-weight:700; color:#00aa00;&quot;&gt;默认模式下不要让该程序窗口遮挡住相关部分，如鱼耐力值&lt;/span&gt;&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-weight:700; color:#00aa00;&quot;&gt;使用时先点击初始化，然后点击开始执行&lt;/span&gt;&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-weight:700; color:#00aa00;&quot;&gt;每次开始的第一次挥杆需要自己点击挥出，后面是自动循环&lt;/span&gt;&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-weight:700; color:#00aa00;&quot;&gt;可以随时停止，每次停止后的第一次挥杆，依旧需要自己挥出&lt;/span&gt;&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-weight:700; color:#00aa00;&quot;&gt;偶尔会因为识别循环过快导致报错卡死，重启程序就好&lt;/span&gt;&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-weight:700; color:#00aa00;&quot;&gt;更多细节请阅读readme中相关部分，这里写不下&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignmentFlag::AlignHCenter|Qt::AlignmentFlag::AlignTop</set>

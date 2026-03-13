@@ -1,4 +1,9 @@
+"""PaddleOCR 模块
+
+提供 PaddleOCR 的初始化和预测功能。
+"""
 import os
+from typing import Optional, Any
 
 # 在导入 PaddleOCR 前设置为 True 以跳过模型源链接检查
 os.environ["PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK"] = "True"
@@ -7,10 +12,13 @@ from paddleocr import PaddleOCR
 from config import REC_MODEL_PATH, REC_MODEL_NAME, DET_MODEL_PATH, DET_MODEL_NAME
 
 
-def paddle_ocr_init():
-    """
-    进行 PaddleOCR 初始化，参数含义请参考官方
-    :return: 初始化后的 PaddleOCR 实例
+def paddle_ocr_init() -> Optional[PaddleOCR]:
+    """初始化 PaddleOCR 实例
+    
+    使用本地模型目录初始化 PaddleOCR，配置各项参数。
+    
+    Returns:
+        Optional[PaddleOCR]: 初始化后的 PaddleOCR 实例。
     """
     # 初始化 PaddleOCR，通过懒加载执行
     ocr = PaddleOCR(
@@ -25,12 +33,15 @@ def paddle_ocr_init():
     return ocr
 
 
-def paddle_ocr_predict(ocr, preprocessed_frame):
-    """
-    返回文字识别结果
-    :param ocr: PaddleOCR 实例
-    :param preprocessed_frame: 预处理后的图像
-    :return: 文字识别结果
+def paddle_ocr_predict(ocr: PaddleOCR, preprocessed_frame: Any) -> Optional[str]:
+    """使用 PaddleOCR 进行文字识别
+    
+    Args:
+        ocr (PaddleOCR): PaddleOCR 实例。
+        preprocessed_frame (Any): 预处理后的图像（支持 numpy 数组）。
+        
+    Returns:
+        Optional[str]: 识别出的文字，如果识别失败返回 None。
     """
     result = ocr.predict(input=preprocessed_frame)
 
@@ -45,7 +56,7 @@ def paddle_ocr_predict(ocr, preprocessed_frame):
     if len(text_list) == 0:
         return None
 
-    # PaddleOCR 必须再取出 [0] 得到 str 格式， 再通过 strip() 去除开头结尾的空白字符串
+    # PaddleOCR 必须再取出 [0] 得到 str 格式，再通过 strip() 去除开头结尾的空白字符串
     text = text_list[0].strip()
 
     return text

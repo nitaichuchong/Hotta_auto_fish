@@ -1,3 +1,9 @@
+"""检测逻辑模块
+
+提供图像检测功能，包括截图、颜色检测和轮廓识别。
+"""
+from typing import Optional, Tuple
+
 import cv2
 import numpy as np
 
@@ -8,28 +14,44 @@ from src.utils.mss_capture_manager import get_mss_manager
 from src.utils.window_manager import is_window_foreground
 
 # 全局截图禁用标志
-_screenshot_disabled = False
+_screenshot_disabled: bool = False
 
 
-def disable_screenshots():
-    """禁用所有截图操作（在线程停止时调用）"""
+def disable_screenshots() -> None:
+    """禁用所有截图操作
+    
+    在线程停止时调用此函数，防止新的截图请求。
+    """
     global _screenshot_disabled
     _screenshot_disabled = True
 
 
-def enable_screenshots():
-    """启用截图操作"""
+def enable_screenshots() -> None:
+    """启用截图操作
+    
+    恢复截图功能，允许进行图像捕获。
+    """
     global _screenshot_disabled
     _screenshot_disabled = False
 
 
-def capture_and_convert(region=FISH_GAME_REGION):
-    """为减少重复代码提取的共同方法，截图并返回所需要的格式
-    :param region: 从 config 中读取的截图区域，[x, y, w, h]
-    :returns:
-        bgr_frame: 经过 np 处理后的 BGR 格式截图
-        hsv_frame: 经过 np 处理后的 HSV 格式截图
-        region_x: 截图区域的左边界在屏幕上的位置 x，相对坐标下 x=0
+def capture_and_convert(region: Tuple[int, int, int, int] = FISH_GAME_REGION) -> Tuple[Optional[np.ndarray], Optional[np.ndarray], Optional[int]]:
+    """捕获屏幕图像并转换为所需格式
+    
+    根据窗口状态选择合适的截图方式（MSS 或 DXGI），并返回 BGR 和 HSV 格式的图像。
+    
+    Args:
+        region (Tuple[int, int, int, int]): 截图区域，格式为 (x, y, width, height)。
+        
+    Returns:
+        Tuple[Optional[np.ndarray], Optional[np.ndarray], Optional[int]]: 
+            (bgr_frame, hsv_frame, region_x)
+            - bgr_frame: BGR 格式的截图（失败时返回 None）
+            - hsv_frame: HSV 格式的截图（失败时返回 None）
+            - region_x: 截图区域左边界在屏幕上的 x 坐标（失败时返回 None）
+            
+    Raises:
+        ValueError: 当 region 参数格式不正确或包含负数时抛出。
     """
     # 新增参数校验
     if not isinstance(region, (tuple, list)) or len(region) != 4:
@@ -75,12 +97,14 @@ def capture_and_convert(region=FISH_GAME_REGION):
         return None, None, None
 
 
-def get_yellow_area_range():
-    """
-    获取黄色区域左和右边界（可忽略玩家的白色方块遮挡）
-    :returns:
-        min_x: 黄色区域的左边界，绝对坐标
-        max_x: 黄色区域的右边界，绝对坐标
+def get_yellow_area_range() -> Optional[Tuple[int, int]]:
+    """获取黄色区域的左右边界
+    
+    检测体力条中的黄色区域，返回其左右边界的绝对坐标。
+    
+    Returns:
+        Optional[Tuple[int, int]]: (min_x, max_x) 黄色区域的左右边界绝对坐标，
+                                  如果未检测到则返回 None。
     """
     # 截图并转换为 HSV 颜色空间
     _, hsv_frame, region_x = capture_and_convert()
@@ -91,8 +115,8 @@ def get_yellow_area_range():
     # 读取并创建黄色的 mask
     mask = cv2.inRange(hsv_frame, YELLOW_LOW, YELLOW_HIGH)
 
-    # 提取所有黄色像素的x坐标（忽略y坐标，只看水平方向）
-    # 找到所有黄色像素的位置，mask == 255 表示为白色，即匹配的到的颜色
+    # 提取所有黄色像素的 x 坐标（忽略 y 坐标，只看水平方向）
+    # 找到所有黄色像素的位置，mask == 255 表示为白色，即匹配到的颜色
     # 我们只关心 x 坐标上，即左右的边界位置，所以忽略 y
     _, x_coordinates = np.where(mask == 255)
     if len(x_coordinates) == 0:  # 无黄色区域
@@ -106,10 +130,13 @@ def get_yellow_area_range():
     return min_x, max_x
 
 
-def get_white_block_pos():
-    """
-    获取代表玩家的白色方块的中心点
-    :return: center_x: 代表玩家的白色方块的中心点，绝对坐标
+def get_white_block_pos() -> Optional[int]:
+    """获取代表玩家的白色方块的中心点
+    
+    通过轮廓检测识别代表玩家位置的白色方块，返回其中心点的绝对坐标。
+    
+    Returns:
+        Optional[int]: 白色方块中心点的 x 坐标绝对坐标，如果未检测到则返回 None。
     """
     # 白色方块不适用 HSV 格式，改用 BGR
     bgr_frame, _, region_x = capture_and_convert()
@@ -134,17 +161,17 @@ def get_white_block_pos():
     # 定义目标白色方块的特征筛选条件
     target_contour = None
     for cnt in contours:
-        # 计算轮廓的外接矩形（x,y是相对截图的坐标；w_cnt=宽，h_cnt=高）
+        # 计算轮廓的外接矩形（x,y 是相对截图的坐标；w_cnt=宽，h_cnt=高）
         x_cnt, y_cnt, w_cnt, h_cnt = cv2.boundingRect(cnt)
 
         # 面积范围（排除太小/太大的轮廓，单位：像素，在 config 中调整）
-        # 目标方块面积通常在10-200像素（可微调）
+        # 目标方块面积通常在 10-200 像素（可微调）
         area = cv2.contourArea(cnt)
         if not (WHITE_BLOCK_AREA_MIN <= area <= WHITE_BLOCK_AREA_MAX):
             continue
 
         # 轮廓的实心度（排除空心/零散轮廓）
-        # 实心度=轮廓面积/外接矩形面积，越接近1越接近实心矩形
+        # 实心度=轮廓面积/外接矩形面积，越接近 1 越接近实心矩形
         # 实心度≥0.5（在 config 中调整）
         solidity = area / (w_cnt * h_cnt) if (w_cnt * h_cnt) > 0 else 0
         if solidity < WHITE_BLOCK_SOLIDITY:
@@ -154,13 +181,13 @@ def get_white_block_pos():
         target_contour = cnt
         break  # 找到目标后直接退出循环
 
-    # 无符合条件的轮廓，返回None
+    # 无符合条件的轮廓，返回 None
     if target_contour is None:
         return None
 
     # 计算目标轮廓相对截图的中心点
     x_cnt, y_cnt, w_cnt, h_cnt = cv2.boundingRect(target_contour)
-    center_x_rel = x_cnt + w_cnt / 2  # 轮廓外接矩形的中心x
+    center_x_rel = x_cnt + w_cnt / 2  # 轮廓外接矩形的中心 x
 
     # 转换为屏幕绝对坐标
     center_x_abs = region_x + center_x_rel
