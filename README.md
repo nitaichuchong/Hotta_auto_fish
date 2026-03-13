@@ -18,7 +18,7 @@
 
 首先感谢 dxgi 后台捕获的原作者项目：
 
-[https://github.com/wangpy1995/dxgi4py]()
+[dxgi4py](https://github.com/wangpy1995/dxgi4py)
 
 我自己是没有能力编写的，而且内外网上也都没有找到适用的方案，非常感谢该项目，否则关于后台部分无法实现。
 
